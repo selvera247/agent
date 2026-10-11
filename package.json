@@ -1,19 +1,22 @@
 {
-  "name": "peak-close-continuous-reconciliation",
+  "name": "peak-close",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "0.1.0",
+  "description": "Peak Close — headless continuous close & reconciliation MVP",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "npm run dev -w @peak-close/api & npm run dev -w @peak-close/web",
+    "dev:api": "npm run dev -w @peak-close/api",
+    "dev:web": "npm run dev -w @peak-close/web",
+    "build": "npm run build -w @peak-close/shared && npm run build -w @peak-close/api && npm run build -w @peak-close/web",
+    "start": "npm run start -w @peak-close/api",
+    "db:seed": "npm run db:seed -w @peak-close/api",
+    "test": "npm run test -w @peak-close/api"
   },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.7.0",
-    "vite": "^5.0.0"
+  "engines": {
+    "node": ">=18"
   }
 }

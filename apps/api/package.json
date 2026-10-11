@@ -1,0 +1,24 @@
+{
+  "name": "@peak-close/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "db:seed": "node src/db/seed.js",
+    "build": "node -e \"console.log('api: ok')\"",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@peak-close/shared": "*",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "zod": "^3.23.8"
+  }
+}
