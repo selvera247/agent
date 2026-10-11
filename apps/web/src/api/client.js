@@ -1,3 +1,5 @@
+// Same-origin `/api/v1` in production (API serves the web build).
+// Vite dev server proxies `/api` → localhost:4000.
 const API_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
 export async function api(path, { token, method = "GET", body } = {}) {

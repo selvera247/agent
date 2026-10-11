@@ -7,16 +7,28 @@ import { id } from "../lib/ids.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-function seed() {
-  const dbPath =
+export function defaultDbPath() {
+  return (
     process.env.DATABASE_PATH ||
-    path.join(__dirname, "../../data/findatagraph.db");
+    path.join(__dirname, "../../data/findatagraph.db")
+  );
+}
 
-  if (fs.existsSync(dbPath)) {
+/** Seed demo org/data. If `force`, wipe existing DB file first. */
+export function seedDatabase({ force = false } = {}) {
+  const dbPath = defaultDbPath();
+
+  if (force && fs.existsSync(dbPath)) {
     fs.unlinkSync(dbPath);
+    resetDbConnection();
   }
-  resetDbConnection();
+
   const db = getDb();
+  const existing = db.prepare(`SELECT COUNT(*) AS n FROM users`).get();
+  if (!force && existing.n > 0) {
+    console.log("Database already seeded; skipping.");
+    return { seeded: false };
+  }
 
   const orgId = "org_fdg_demo";
   const usEast = "ent_us_east";
@@ -30,9 +42,10 @@ function seed() {
 
   db.exec("BEGIN");
 
-  db.prepare(
-    `INSERT INTO organizations (id, name) VALUES (?, ?)`
-  ).run(orgId, "Meridian Retail Co");
+  db.prepare(`INSERT INTO organizations (id, name) VALUES (?, ?)`).run(
+    orgId,
+    "Meridian Retail Co"
+  );
 
   const users = [
     {
@@ -112,7 +125,6 @@ function seed() {
     { num: "INV-1004", ent: usWest, cust: "Fabrikam", amt: 15600, date: "2026-09-12" },
     { num: "INV-1005", ent: eu, cust: "Litware EU", amt: 72000, date: "2026-09-15" },
     { num: "INV-1006", ent: usEast, cust: "Adventure Works", amt: 33400, date: "2026-09-18" },
-    // Will be missing in GL
     { num: "INV-1007", ent: usWest, cust: "Tailspin Toys", amt: 18800, date: "2026-09-20" },
   ];
 
@@ -138,14 +150,11 @@ function seed() {
 
   const gl = [
     { ref: "INV-1001", ent: usEast, amt: 125000, acct: "4000", date: "2026-09-04" },
-    // amount mismatch
     { ref: "INV-1002", ent: usEast, amt: 48000, acct: "4000", date: "2026-09-06" },
     { ref: "INV-1003", ent: usWest, amt: 91000, acct: "4000", date: "2026-09-09" },
     { ref: "INV-1004", ent: usWest, amt: 15600, acct: "4000", date: "2026-09-13" },
-    // entity mismatch (posted to US-EAST instead of EU)
     { ref: "INV-1005", ent: usEast, amt: 72000, acct: "4000", date: "2026-09-16" },
     { ref: "INV-1006", ent: usEast, amt: 33400, acct: "4000", date: "2026-09-19" },
-    // orphan GL (missing in CRM)
     { ref: "INV-1099", ent: usWest, amt: 5400, acct: "4000", date: "2026-09-22" },
   ];
 
@@ -176,6 +185,10 @@ function seed() {
   for (const u of users) {
     console.log(`  - ${u.email} (${u.role})`);
   }
+  return { seeded: true };
 }
 
-seed();
+const isCli = process.argv[1] && process.argv[1].endsWith("seed.js");
+if (isCli) {
+  seedDatabase({ force: true });
+}
