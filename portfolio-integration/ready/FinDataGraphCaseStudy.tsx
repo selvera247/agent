@@ -3,15 +3,11 @@ import CaseCallout from "../components/CaseCallout";
 
 /**
  * Public hosted FinDataGraph demo (API + web).
- * Replace after Render/Fly deploy — see agent repo deploy-render.md
+ * Currently a Cloudflare quick-tunnel preview. After Render blueprint deploy,
+ * replace with https://findatagraph.onrender.com (see agent repo deploy-render.md).
  */
-// Prefer env override; then durable Render host; tunnel URL is ephemeral for agent demos.
 export const FINDATAGRAPH_DEMO_URL =
   import.meta.env.VITE_FINDATAGRAPH_DEMO_URL ||
-  "https://findatagraph.onrender.com";
-
-/** Current live preview (Cloudflare quick tunnel — replace with Render URL when up). */
-export const FINDATAGRAPH_LIVE_PREVIEW_URL =
   "https://joyce-dealt-laden-cuts.trycloudflare.com";
 
 export default function FinDataGraphCaseStudy() {
