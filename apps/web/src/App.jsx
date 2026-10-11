@@ -10,7 +10,7 @@ import AuditPage from "./pages/AuditPage";
 
 function Protected({ children }) {
   const { token, booting } = useAuth();
-  if (booting) return <div className="boot">Loading Peak Close…</div>;
+  if (booting) return <div className="boot">Loading FinDataGraph…</div>;
   if (!token) return <Navigate to="/login" replace />;
   return children;
 }

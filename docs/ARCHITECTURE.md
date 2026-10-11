@@ -1,6 +1,6 @@
-# Peak Close — System Architecture
+# FinDataGraph — System Architecture
 
-Headless, API-first continuous close & reconciliation platform.
+Headless, API-first **financial data graph** for continuous close & reconciliation.
 The web app is one client; the API is the product surface.
 
 ## Goals (MVP)
@@ -14,7 +14,7 @@ The web app is one client; the API is the product surface.
 
 ```
 ┌─────────────┐     HTTPS/JSON      ┌──────────────────┐
-│  Web Client │ ──────────────────► │  Peak Close API  │
+│  Web Client │ ──────────────────► │  FinDataGraph API  │
 │  (React)    │ ◄────────────────── │  (Express, JWT)  │
 └─────────────┘                     └────────┬─────────┘
                                              │

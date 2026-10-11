@@ -12,7 +12,7 @@ export function getDb() {
 
   const dbPath =
     process.env.DATABASE_PATH ||
-    path.join(__dirname, "../../data/peak-close.db");
+    path.join(__dirname, "../../data/findatagraph.db");
 
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 

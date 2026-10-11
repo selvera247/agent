@@ -1,5 +1,5 @@
 {
-  "name": "@peak-close/api",
+  "name": "@findatagraph/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
-    "@peak-close/shared": "*",
+    "@findatagraph/shared": "*",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.7.0",
     "cors": "^2.8.5",

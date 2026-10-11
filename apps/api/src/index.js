@@ -31,7 +31,7 @@ app.use(
 app.use(express.json({ limit: "1mb" }));
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, service: "peak-close-api", version: "0.1.0" });
+  res.json({ ok: true, service: "findatagraph-api", version: "0.1.0" });
 });
 
 app.use("/api/v1/auth", authRoutes);
@@ -58,5 +58,5 @@ app.use((err, _req, res, _next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Peak Close API listening on http://localhost:${PORT}`);
+  console.log(`FinDataGraph API listening on http://localhost:${PORT}`);
 });

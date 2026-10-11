@@ -15,8 +15,8 @@ export default function Shell() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          Peak Close
-          <span>Continuous reconciliation</span>
+          FinDataGraph
+          <span>Financial data graph</span>
         </div>
         <nav className="nav-list" aria-label="App">
           {links.map((link) => (

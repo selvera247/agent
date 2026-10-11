@@ -1,6 +1,6 @@
-# Peak Close
+# FinDataGraph
 
-Headless continuous close & reconciliation MVP.
+**Financial data graph** for continuous close & reconciliation.
 
 API-first control plane for **detect → investigate → resolve → report** on CRM invoice ↔ GL revenue breaks. The React app is one client; the HTTP API is the product.
 
@@ -21,7 +21,7 @@ apps/web  ──JSON/JWT──►  apps/api  ──SQL──►  SQLite (Postgre
 ## File structure
 
 ```
-peak-close/
+findatagraph/
 ├── apps/
 │   ├── api/                 # Headless Express API
 │   │   ├── src/
@@ -92,19 +92,19 @@ peak-close/
 
 ```bash
 npm install
-npm run db:seed -w @peak-close/api
+npm run db:seed -w @findatagraph/api
 npm run dev:api          # :4000
 npm run dev:web          # :5173 (proxies /api → API)
 ```
 
 Demo logins (password `password123`):
 
-- `controller@peakclose.demo`
-- `accountant@peakclose.demo` (US-EAST + US-WEST only)
-- `admin@peakclose.demo`
+- `controller@findatagraph.demo`
+- `accountant@findatagraph.demo` (US-EAST + US-WEST only)
+- `admin@findatagraph.demo`
 
 ```bash
-npm test -w @peak-close/api
+npm test -w @findatagraph/api
 npm run build
 ```
 

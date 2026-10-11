@@ -1,5 +1,5 @@
 {
-  "name": "@peak-close/web",
+  "name": "@findatagraph/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview --host 0.0.0.0 --port 5173"
   },
   "dependencies": {
-    "@peak-close/shared": "*",
+    "@findatagraph/shared": "*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.28.0"

@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 function seed() {
   const dbPath =
     process.env.DATABASE_PATH ||
-    path.join(__dirname, "../../data/peak-close.db");
+    path.join(__dirname, "../../data/findatagraph.db");
 
   if (fs.existsSync(dbPath)) {
     fs.unlinkSync(dbPath);
@@ -18,7 +18,7 @@ function seed() {
   resetDbConnection();
   const db = getDb();
 
-  const orgId = "org_peak_demo";
+  const orgId = "org_fdg_demo";
   const usEast = "ent_us_east";
   const usWest = "ent_us_west";
   const eu = "ent_eu";
@@ -32,26 +32,26 @@ function seed() {
 
   db.prepare(
     `INSERT INTO organizations (id, name) VALUES (?, ?)`
-  ).run(orgId, "Peak Retail Co");
+  ).run(orgId, "Meridian Retail Co");
 
   const users = [
     {
       id: "usr_admin",
-      email: "admin@peakclose.demo",
+      email: "admin@findatagraph.demo",
       name: "Avery Admin",
       role: "admin",
       entities: [],
     },
     {
       id: "usr_controller",
-      email: "controller@peakclose.demo",
+      email: "controller@findatagraph.demo",
       name: "Casey Controller",
       role: "controller",
       entities: [],
     },
     {
       id: "usr_accountant",
-      email: "accountant@peakclose.demo",
+      email: "accountant@findatagraph.demo",
       name: "Riley Accountant",
       role: "accountant",
       entities: [usEast, usWest],
@@ -171,7 +171,7 @@ function seed() {
 
   db.exec("COMMIT");
 
-  console.log("Seeded Peak Close demo database.");
+  console.log("Seeded FinDataGraph demo database.");
   console.log("Users (password: password123):");
   for (const u of users) {
     console.log(`  - ${u.email} (${u.role})`);

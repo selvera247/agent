@@ -5,7 +5,7 @@ import { useAuth } from "../api/auth";
 export default function LoginPage() {
   const { login, token } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("controller@peakclose.demo");
+  const [email, setEmail] = useState("controller@findatagraph.demo");
   const [password, setPassword] = useState("password123");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,8 +29,8 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <form className="login-card" onSubmit={onSubmit}>
-        <h1>Peak Close</h1>
-        <p className="sub">Sign in to the reconciliation control plane.</p>
+        <h1>FinDataGraph</h1>
+        <p className="sub">Sign in to your financial data graph.</p>
         {error ? <p className="error">{error}</p> : null}
         <div className="field">
           <label htmlFor="email">Email</label>
@@ -60,8 +60,8 @@ export default function LoginPage() {
         <p className="hint">
           Demo users (password <code>password123</code>):
           <br />
-          controller@peakclose.demo · accountant@peakclose.demo ·
-          admin@peakclose.demo
+          controller@findatagraph.demo · accountant@findatagraph.demo ·
+          admin@findatagraph.demo
         </p>
       </form>
     </div>

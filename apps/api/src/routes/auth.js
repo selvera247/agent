@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { AUDIT_ACTIONS } from "@peak-close/shared";
+import { AUDIT_ACTIONS } from "@findatagraph/shared";
 import { getDb } from "../db/connection.js";
 import { signToken, requireAuth } from "../middleware/auth.js";
 import { writeAudit } from "../lib/audit.js";

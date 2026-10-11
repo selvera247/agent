@@ -1,20 +1,20 @@
 {
-  "name": "peak-close",
+  "name": "findatagraph",
   "private": true,
   "version": "0.1.0",
-  "description": "Peak Close — headless continuous close & reconciliation MVP",
+  "description": "FinDataGraph — financial data graph for continuous close & reconciliation",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w @peak-close/api & npm run dev -w @peak-close/web",
-    "dev:api": "npm run dev -w @peak-close/api",
-    "dev:web": "npm run dev -w @peak-close/web",
-    "build": "npm run build -w @peak-close/shared && npm run build -w @peak-close/api && npm run build -w @peak-close/web",
-    "start": "npm run start -w @peak-close/api",
-    "db:seed": "npm run db:seed -w @peak-close/api",
-    "test": "npm run test -w @peak-close/api"
+    "dev": "npm run dev -w @findatagraph/api & npm run dev -w @findatagraph/web",
+    "dev:api": "npm run dev -w @findatagraph/api",
+    "dev:web": "npm run dev -w @findatagraph/web",
+    "build": "npm run build -w @findatagraph/shared && npm run build -w @findatagraph/api && npm run build -w @findatagraph/web",
+    "start": "npm run start -w @findatagraph/api",
+    "db:seed": "npm run db:seed -w @findatagraph/api",
+    "test": "npm run test -w @findatagraph/api"
   },
   "engines": {
     "node": ">=18"

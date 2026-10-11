@@ -5,7 +5,7 @@ import {
   EXCEPTION_STATUS,
   MATERIALITY_USD,
   ROLES,
-} from "@peak-close/shared";
+} from "@findatagraph/shared";
 import { getDb } from "../db/connection.js";
 import { requireAuth, requireRoles, entityFilterSql } from "../middleware/auth.js";
 import { writeAudit } from "../lib/audit.js";

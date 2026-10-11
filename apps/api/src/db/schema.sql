@@ -1,4 +1,4 @@
--- Peak Close schema (SQLite MVP; portable to Postgres with minor type swaps)
+-- FinDataGraph schema (SQLite MVP; portable to Postgres with minor type swaps)
 -- org_id reserved for multi-tenant scale-out
 
 PRAGMA foreign_keys = ON;

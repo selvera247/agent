@@ -7,7 +7,7 @@ import { spawn } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const dbPath = path.join(root, "data/test-peak-close.db");
+const dbPath = path.join(root, "data/test-findatagraph.db");
 const PORT = 4107;
 const BASE = `http://127.0.0.1:${PORT}/api/v1`;
 
@@ -58,7 +58,7 @@ after(() => {
   if (child) child.kill("SIGTERM");
 });
 
-async function login(email = "controller@peakclose.demo") {
+async function login(email = "controller@findatagraph.demo") {
   const res = await fetch(`${BASE}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -105,7 +105,7 @@ test("run reconciliation creates exceptions", async () => {
 });
 
 test("accountant entity scope enforced", async () => {
-  const { token } = await login("accountant@peakclose.demo");
+  const { token } = await login("accountant@findatagraph.demo");
   const entities = await fetch(`${BASE}/entities`, {
     headers: { Authorization: `Bearer ${token}` },
   }).then((r) => r.json());

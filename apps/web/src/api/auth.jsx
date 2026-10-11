@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "./client";
 
 const AuthContext = createContext(null);
-const STORAGE_KEY = "peak_close_session";
+const STORAGE_KEY = "findatagraph_session";
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);

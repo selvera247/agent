@@ -1,4 +1,4 @@
-/** Shared contracts for Peak Close API + web */
+/** Shared contracts for the FinDataGraph financial data graph API + web */
 
 export const ROLES = Object.freeze({
   ADMIN: "admin",
