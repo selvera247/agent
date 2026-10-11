@@ -108,6 +108,22 @@ npm test -w @findatagraph/api
 npm run build
 ```
 
+## Hosted live demo
+
+Single-host production mode (API serves the web build):
+
+```bash
+npm run start:prod
+```
+
+**Durable host:** see [`.github/workflows/deploy-render.md`](.github/workflows/deploy-render.md)  
+(`Dockerfile` + `render.yaml` → https://render.com/deploy?repo=https://github.com/selvera247/agent)
+
+**Portfolio wiring:** copy files from [`portfolio-integration/`](portfolio-integration/) into  
+`selvera247/demo-interview--app` → route `/#/projects/findatagraph` with a **Launch demo** button.
+
+Demo login: `controller@findatagraph.demo` / `password123`
+
 ## Scalability notes
 
 - `org_id` on every business row → multi-tenant ready
