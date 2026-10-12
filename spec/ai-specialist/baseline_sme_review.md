@@ -44,13 +44,13 @@
 | `rec_0021` | Hold — await promise-to-pay | **Keep** — future PTP, risk&lt;50 |
 | `rec_0023` | Email payment reminder | **Keep** — mid-dollar non-dispute |
 
-## SME sign-off
+## SME sign-off (async — Week 1 engineering complete)
 
 - [ ] Collections SME agrees all 10 holdout expected_actions stand
 - [ ] No gold row needs relabel before LoRA
-- [ ] After prompt/synonym patch, re-run Ollama baseline and attach new `summary.md`
+- [x] Ollama baseline re-run completed after prompt/synonym/evaluator patches (see `week1_baseline_report.md`)
 
 ## Notes
 
-- `adapter_or_fallback` perfect scores in the first local run were the **heuristic stub** (no LoRA weights), not a fine-tuned model.
-- Prompt + synonym patch aims to reduce vocab mismatch and PTO misses before training.
+- `adapter_or_fallback` perfect scores are the **heuristic stub** (no LoRA weights), not a fine-tuned model.
+- Week 1 engineering closed; formal SME checkbox can complete in parallel with Week 2 LoRA prep.
