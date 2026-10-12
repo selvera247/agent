@@ -5,12 +5,24 @@
 
 ## Metric trajectory
 
-| Run | action_match | policy_pass | groundedness | hallucination | p50 |
-|---|---|---|---|---|---|
-| Pre-prompt patch | 0.50 | 0.80 | 0.50 | 0.50 | ~9.5s |
-| Post allowed-action prompt | **0.70** | **1.00** | 0.40 | 0.60 | ~8.0s |
+| Run | action_match | policy_pass | groundedness | hallucination | evidence | p50 |
+|---|---|---|---|---|---|---|
+| Pre-prompt patch | 0.50 | 0.80 | 0.50 | 0.50 | 0.50 | ~9.5s |
+| Post allowed-action prompt | 0.70 | **1.00** | 0.40 | 0.60 | — | ~8.0s |
+| Routing hints (noisy groundedness) | 0.60 | **1.00** | 0.20 | 0.80 | 0.47 | ~9.0s |
+| **Week 1 locked baseline** (threshold fix) | **0.60** | **1.00** | **0.80** | **0.20** | **0.68** | ~9.2s |
 
-Policy hard-fails cleared. Remaining issues: over-use of `Keep parent-child grouping` on non-parent rows, and evidence/reason grounding (often **action correct** but evidence format fails).
+### Week 1 gate read
+
+| Gate | Target | Week 1 baseline | Status |
+|---|---|---|---|
+| policy_pass_rate | ≥ 0.95 | 1.00 | **Pass** |
+| groundedness_rate | ≥ 0.95 | 0.80 | Short |
+| hallucination_rate | &lt; 0.05 | 0.20 | Short |
+| action_match_rate | improve vs raw 0.50 | 0.60 | Improved; LoRA target |
+| median latency | &lt; 1s | ~9s local 7B | Document; not a ship blocker for laptop Ollama |
+
+**Remaining real model gaps (LoRA / Week 2):** parent-child vs call (`rec_0018`), escalate vs call (`rec_0022`), email vs call (`rec_0023`), hold-PTP vs email (`rec_0021`).
 
 ## Top failure cases — gold label verdict
 

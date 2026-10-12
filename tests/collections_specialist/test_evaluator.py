@@ -171,6 +171,81 @@ class EvaluatorTests(unittest.TestCase):
         self.assertTrue(score["action_match"])
         self.assertTrue(score["overall_pass"])
 
+    def test_null_ptp_evidence_grounded(self):
+        ex = base_example(
+            customer={
+                "id": "cust_t",
+                "name": "TEST_PSEUD",
+                "risk_score": 28,
+                "health": "healthy",
+                "strategic_account": False,
+                "last_contact_at": None,
+            },
+            invoices=[
+                {
+                    "invoice_number": "INV_P_16001",
+                    "days_past_due": 8,
+                    "open_balance": 450.0,
+                    "dispute_flag": False,
+                    "promise_to_pay_date": None,
+                }
+            ],
+            policy_flags=["low_dollar_quick_win"],
+            expected_action="Send automated reminder",
+            expected_evidence=["open_ar<5000", "risk_score<30"],
+            collector_context={
+                "assigned_collector": "col_auto",
+                "availability": "available",
+                "skill": "automation",
+            },
+        )
+        pred = {
+            "action": "Send automated reminder",
+            "reason": "Low AR and risk with no promise to pay.",
+            "confidence": 0.75,
+            "evidence": ["open_ar<5000", "risk_score<30", "promise_to_pay_date==null"],
+        }
+        score = score_example(ex, pred)
+        self.assertFalse(score["hallucinated"], score["groundedness_notes"])
+        self.assertTrue(score["grounded"])
+
+    def test_mid_range_threshold_9999_allowed(self):
+        ex = base_example(
+            expected_action="Email payment reminder",
+            expected_evidence=["open_ar>=5000", "open_ar<10000"],
+            customer={
+                "id": "cust_t",
+                "name": "TEST_PSEUD",
+                "risk_score": 46,
+                "health": "watch",
+                "strategic_account": False,
+                "last_contact_at": None,
+            },
+            invoices=[
+                {
+                    "invoice_number": "INV_P_23001",
+                    "days_past_due": 30,
+                    "open_balance": 8800,
+                    "dispute_flag": False,
+                    "promise_to_pay_date": None,
+                }
+            ],
+            policy_flags=["no_split_customer"],
+            collector_context={
+                "assigned_collector": "col_lee",
+                "availability": "available",
+                "skill": "standard",
+            },
+        )
+        pred = {
+            "action": "Email payment reminder",
+            "reason": "Mid-dollar AR between 5000 and 9999.",
+            "confidence": 0.7,
+            "evidence": ["open_ar>=5000", "open_ar<10000"],
+        }
+        score = score_example(ex, pred)
+        self.assertFalse(score["hallucinated"], score["groundedness_notes"])
+
     def test_threshold_in_reason_not_hallucination(self):
         ex = base_example(
             customer={

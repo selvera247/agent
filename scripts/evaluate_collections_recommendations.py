@@ -114,12 +114,14 @@ AUTO_ACTIONS = {"send automated reminder"}
 ALLOWED_THRESHOLDS = {
     "1000",
     "5000",
+    "9999",
     "10000",
     "50000",
     "100000",
     "1000000",
     "1000.0",
     "5000.0",
+    "9999.0",
     "10000.0",
     "50000.0",
     "100000.0",
@@ -246,19 +248,27 @@ def derived_predicates(example: dict[str, Any]) -> set[str]:
         preds.add(f"parent_account=={cust['parent_account']}")
 
     any_dispute = False
+    any_ptp = False
     for inv in invoices:
         num = inv.get("invoice_number")
         if inv.get("dispute_flag"):
             any_dispute = True
             preds.add(f"{num}.dispute_flag==true")
         if inv.get("promise_to_pay_date"):
+            any_ptp = True
             preds.add(f"{num}.promise_to_pay_date!=null")
             # past PTP heuristic: date string < 2026-10-12
             ptp = str(inv["promise_to_pay_date"])
             if ptp < "2026-10-12":
                 preds.add("promise_to_pay_date_past")
+        else:
+            preds.add(f"{num}.promise_to_pay_date==null")
+            preds.add("promise_to_pay_date==null")
     if not any_dispute:
         preds.add("dispute_flag==false")
+    if not any_ptp:
+        preds.add("promise_to_pay_date==null")
+        preds.add("no_promise_to_pay")
 
     avail = ctx.get("availability")
     if avail:
@@ -328,16 +338,27 @@ def check_policy(example: dict[str, Any], pred: dict[str, Any]) -> tuple[bool, l
 def evidence_cites_input(item: str, example: dict[str, Any], known_nums: set[str]) -> bool:
     """Allow field:value evidence that cites numbers/ids/flags present in the input."""
     text = norm(item)
+    nitem = normalize_evidence_item(item)
     flags = [norm(f) for f in (example.get("policy_flags") or [])]
     if any(norm(i) in text for i in input_ids(example)):
         return True
+    # null PTP is a real input fact when no/ all invoices lack promise_to_pay_date
+    invoices = example.get("invoices") or []
+    if "promise_to_pay" in text or "ptp" in text:
+        if all(not i.get("promise_to_pay_date") for i in invoices):
+            if "null" in text or "==null" in nitem or "none" in text or "no_promise" in nitem:
+                return True
+        if any(i.get("promise_to_pay_date") for i in invoices) and (
+            "!=null" in nitem or "not null" in text or "future" in text
+        ):
+            return True
     # policy_flags.includes(dispute_specialist_required) / policy:flag / flag in policy_flags
     for flag in flags:
         if not flag:
             continue
         if flag in text:
             return True
-        if f"policy:{flag}" in normalize_evidence_item(item):
+        if f"policy:{flag}" in nitem:
             return True
     # risk_score: 28 / open_balance: $450.00 / days_past_due: 8
     for m in re.finditer(
