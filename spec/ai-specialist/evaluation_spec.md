@@ -73,7 +73,8 @@ A claim is grounded if it matches one of:
 Fail if reason invents amounts, DPD, invoice IDs, or collector names not in input.
 
 Allowed exceptions (not hallucination):
-- Rubric thresholds used as cutoffs: `1000`, `5000`, `10000`, `50000`, `100000`
+- Rubric thresholds used as cutoffs: `1000`, `5000`, `9999`, `10000`, `50000`, `100000`
+- `promise_to_pay_date==null` when no invoice has a PTP date
 - Policy flag citations such as `policy:dispute_specialist_required` or `policy_flags.includes(dispute_specialist_required)` when that flag is present in input
 
 ## Evidence coverage
