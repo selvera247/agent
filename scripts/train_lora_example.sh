@@ -64,7 +64,13 @@ for line in src.read_text().splitlines():
                         "You are a strict collections recommendation assistant. Use only facts "
                         "in the provided JSON input. Output a single JSON object with keys: "
                         "action, reason, confidence (0-1), evidence (list of strings). "
-                        "Do not invent facts. Keep reason concise and cite evidence."
+                        "Do not invent facts. JSON only, no markdown. "
+                        "action must be one of: Route to dispute specialist | Send automated reminder | "
+                        "Call AP contact | Email payment reminder | Escalate to manager | "
+                        "Hold — await promise-to-pay | Reassign to available collector | "
+                        "Keep parent-child grouping. "
+                        "If collector availability is pto/unavailable, action must be "
+                        "Reassign to available collector."
                     ),
                 },
                 {

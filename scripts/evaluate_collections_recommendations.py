@@ -26,28 +26,44 @@ ACTION_SYNONYMS: dict[str, set[str]] = {
         "dispute specialist",
         "route dispute",
         "assign dispute collector",
+        "assign dispute specialist",
+        "assign_dispute_specialist",
+        "route_to_dispute_specialist",
+        "dispute_specialist",
     },
     "send automated reminder": {
         "send automated reminder",
         "auto reminder",
         "automation reminder",
         "send reminder (auto)",
+        "send_automated_reminder",
+        "automated reminder",
+        "auto_reminder",
     },
     "call ap contact": {
         "call ap contact",
         "call ap",
         "phone ap",
         "call customer ap",
+        "call_ap_contact",
+        "follow up with customer via phone",
+        "phone customer",
+        "call customer",
     },
     "email payment reminder": {
         "email payment reminder",
         "email reminder",
         "send email reminder",
+        "email_payment_reminder",
+        "send_email_reminder",
     },
     "escalate to manager": {
         "escalate to manager",
         "manager escalation",
         "escalate manager",
+        "escalate_to_manager",
+        "assign manager",
+        "manager_escalation",
     },
     "hold — await promise-to-pay": {
         "hold — await promise-to-pay",
@@ -55,16 +71,24 @@ ACTION_SYNONYMS: dict[str, set[str]] = {
         "hold for ptp",
         "await ptp",
         "wait on promise",
+        "hold await promise to pay",
+        "hold_for_ptp",
     },
     "reassign to available collector": {
         "reassign to available collector",
         "reassign collector",
         "reassign available",
+        "reassign_to_available_collector",
+        "reassign_collector",
+        "assign available collector",
+        "assign_available_collector",
     },
     "keep parent-child grouping": {
         "keep parent-child grouping",
         "maintain parent-child",
         "do not split child",
+        "keep_parent_child_grouping",
+        "maintain_parent_child",
     },
 }
 
@@ -91,13 +115,28 @@ def norm(s: str | None) -> str:
     return re.sub(r"\s+", " ", (s or "").strip().lower())
 
 
+def norm_action(s: str | None) -> str:
+    """Normalize action strings including snake_case model outputs."""
+    a = norm(s)
+    a = a.replace("_", " ")
+    a = a.replace("—", "-")
+    return re.sub(r"\s+", " ", a).strip()
+
+
 def canonical_action(action: str) -> str | None:
-    a = norm(action)
+    a = norm_action(action)
+    # Exact match only first (includes snake_case via norm_action).
     for canon, syns in ACTION_SYNONYMS.items():
-        if a == canon or a in syns:
+        canon_n = norm_action(canon)
+        syns_n = {norm_action(x) for x in syns} | {canon_n}
+        if a == canon_n or a in syns_n:
             return canon
-        for syn in syns:
-            if syn in a or a in syn:
+    # Substring: synonym must appear inside the predicted action, not the reverse
+    # (avoids "assign collector" matching inside "reassign collector").
+    for canon, syns in ACTION_SYNONYMS.items():
+        syns_n = {norm_action(x) for x in syns} | {norm_action(canon)}
+        for syn in syns_n:
+            if len(syn) >= 12 and syn in a:
                 return canon
     return None
 
@@ -260,6 +299,32 @@ def check_policy(example: dict[str, Any], pred: dict[str, Any]) -> tuple[bool, l
     return (len(failures) == 0), failures
 
 
+def evidence_cites_input(item: str, example: dict[str, Any], known_nums: set[str]) -> bool:
+    """Allow field:value evidence that cites numbers/ids present in the input."""
+    text = norm(item)
+    if any(norm(i) in text for i in input_ids(example)):
+        return True
+    # risk_score: 28 / open_balance: $450.00 / days_past_due: 8
+    for m in re.finditer(
+        r"(risk_score|open_balance|open_ar|days_past_due|availability)\s*[:=]\s*\$?([\w.-]+)",
+        text,
+    ):
+        raw = m.group(2).rstrip(",")
+        if raw in known_nums or raw.replace(".0", "") in known_nums:
+            return True
+        if raw in {"pto", "unavailable", "available"}:
+            ctx = example.get("collector_context") or {}
+            if raw == norm(str(ctx.get("availability") or "")):
+                return True
+    # bare known numbers only when paired with a known field keyword
+    field_hints = ("risk", "balance", "ar", "past due", "dpd", "dispute", "strategic", "health")
+    if any(h in text for h in field_hints):
+        for num in known_nums:
+            if len(num) >= 2 and num in text:
+                return True
+    return False
+
+
 def check_groundedness(
     example: dict[str, Any], pred: dict[str, Any]
 ) -> tuple[bool, bool, list[str]]:
@@ -274,16 +339,17 @@ def check_groundedness(
     known_nums = input_numbers(example)
     known_ids = {norm(x) for x in input_ids(example)}
 
-    # Evidence items should match derived predicates or expected style tokens
+    # Evidence items should match derived predicates or cite input fields/values
     ungrounded_ev = []
     for item in evidence:
         nitem = normalize_evidence_item(str(item))
-        # allow if predicate matches ignoring spaces
-        ok = any(normalize_evidence_item(p) == nitem or nitem in normalize_evidence_item(p) for p in preds)
+        ok = any(
+            normalize_evidence_item(p) == nitem or nitem in normalize_evidence_item(p) for p in preds
+        )
         if not ok:
-            # also allow raw substrings of known ids
-            if not any(norm(i) in norm(str(item)) for i in input_ids(example)):
-                ungrounded_ev.append(str(item))
+            ok = evidence_cites_input(str(item), example, known_nums)
+        if not ok:
+            ungrounded_ev.append(str(item))
 
     # Invented invoice-like tokens (require INV_ prefix — do not match the word "invoice")
     inv_mentions = re.findall(r"INV_[A-Z0-9_]+", reason, flags=re.I)
@@ -291,13 +357,12 @@ def check_groundedness(
         if m.upper() not in {x.upper() for x in input_ids(example)}:
             notes.append(f"invented_invoice:{m}")
 
-    # Large amounts in reason that are not in input
-    amount_mentions = re.findall(r"\$?\d{4,}(?:\.\d+)?", reason)
+    # Large amounts in reason that are not in input (ignore digits inside INV_* ids)
+    reason_for_amounts = re.sub(r"INV_[A-Z0-9_]+", " ", reason, flags=re.I)
+    amount_mentions = re.findall(r"\$?\d{4,}(?:\.\d+)?", reason_for_amounts)
     for am in amount_mentions:
         cleaned = am.replace("$", "").rstrip("0").rstrip(".") if "." in am else am.replace("$", "")
-        # compare loosely
         if cleaned not in known_nums and am.replace("$", "") not in known_nums:
-            # allow if it's a threshold phrase already in expected style — still flag
             notes.append(f"invented_amount:{am}")
 
     # Collector names

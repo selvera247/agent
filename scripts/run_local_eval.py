@@ -33,12 +33,37 @@ from evaluate_collections_recommendations import (  # noqa: E402
     write_csv,
 )
 
-SYSTEM_PROMPT = (
-    "You are a strict collections recommendation assistant. Use only facts in the "
-    "provided JSON input. Output a single JSON object with keys: action, reason, "
-    "confidence (0-1), evidence (list of strings). Do not invent facts. Keep reason "
-    "concise and cite evidence."
-)
+SYSTEM_PROMPT = """You are a strict collections recommendation assistant.
+Use only facts in the provided JSON input.
+Output a single JSON object with keys: action, reason, confidence (0-1), evidence (list of strings).
+Do not invent facts, invoice IDs, amounts, or collectors.
+Respond with JSON only. No markdown fences.
+Keep reason to one or two short sentences.
+
+ALLOWED ACTIONS (action must be exactly one of these strings):
+- Route to dispute specialist
+- Send automated reminder
+- Call AP contact
+- Email payment reminder
+- Escalate to manager
+- Hold — await promise-to-pay
+- Reassign to available collector
+- Keep parent-child grouping
+
+HARD POLICY:
+- If collector_context.availability is pto or unavailable: action MUST be "Reassign to available collector".
+- Never split a customer across collectors; if parent_child_grouping or parent_account is present, do not isolate the child.
+- If strategic_account is true: do not use "Send automated reminder".
+- If any invoice has dispute_flag true or policy_flags includes dispute_specialist_required: prefer "Route to dispute specialist" (unless reassignment is required by PTO/unavailable).
+
+EVIDENCE FORMAT:
+- Use short grounded predicates only, for example:
+  risk_score<30, risk_score>=80, open_ar<5000, open_ar>=10000, open_ar>100000,
+  days_past_due>=90, collector.availability==pto, collector.availability==unavailable,
+  strategic_account==true, INV_P_17001.dispute_flag==true,
+  policy:parent_child_grouping, health==critical
+- Every evidence item must be derivable from the input JSON.
+"""
 
 
 def input_payload(example: dict[str, Any]) -> dict[str, Any]:
@@ -238,9 +263,11 @@ def ollama_recommend(
     port: int = 11434,
 ) -> dict[str, Any]:
     user = (
-        "Given this customer and invoice context, produce a JSON recommendation.\n\nINPUT:\n"
+        "Given this customer and invoice context, produce a JSON recommendation.\n"
+        "Choose action from the allowed list. Obey hard policy. Use predicate-style evidence.\n\n"
+        "INPUT:\n"
         + json.dumps(input_payload(example), ensure_ascii=False)
-        + "\n\nRespond with JSON only. No markdown fences."
+        + "\n\nRespond with JSON only. No markdown fences. action must match an allowed action exactly."
     )
     body = {
         "model": model,

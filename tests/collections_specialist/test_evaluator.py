@@ -155,6 +155,60 @@ class EvaluatorTests(unittest.TestCase):
         score = score_example(ex, pred)
         self.assertTrue(score["action_match"])
 
+    def test_snake_case_dispute_synonym(self):
+        ex = base_example()
+        pred = {
+            "action": "assign_dispute_specialist",
+            "reason": "Dispute on INV_P_9 with risk 82.",
+            "confidence": 0.8,
+            "evidence": [
+                "risk_score>=80",
+                "INV_P_9.dispute_flag==true",
+                "open_ar>100000",
+            ],
+        }
+        score = score_example(ex, pred)
+        self.assertTrue(score["action_match"])
+        self.assertTrue(score["overall_pass"])
+
+    def test_field_value_evidence_grounded(self):
+        ex = base_example(
+            customer={
+                "id": "cust_t",
+                "name": "TEST_PSEUD",
+                "risk_score": 28,
+                "health": "healthy",
+                "strategic_account": False,
+                "last_contact_at": None,
+            },
+            invoices=[
+                {
+                    "invoice_number": "INV_P_16001",
+                    "days_past_due": 8,
+                    "open_balance": 450.0,
+                    "dispute_flag": False,
+                    "promise_to_pay_date": None,
+                }
+            ],
+            policy_flags=["low_dollar_quick_win"],
+            expected_action="Send automated reminder",
+            expected_evidence=["open_ar<5000", "risk_score<30"],
+            collector_context={
+                "assigned_collector": "col_auto",
+                "availability": "available",
+                "skill": "automation",
+            },
+        )
+        pred = {
+            "action": "Send automated reminder",
+            "reason": "Low risk 28 and open balance 450 favor automation.",
+            "confidence": 0.75,
+            "evidence": ["risk_score: 28", "open_balance: $450.00", "days_past_due: 8"],
+        }
+        score = score_example(ex, pred)
+        self.assertFalse(score["hallucinated"])
+        self.assertTrue(score["grounded"])
+
     def test_aggregate_rates(self):
         ex = base_example()
         good = score_example(
