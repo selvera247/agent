@@ -14,7 +14,7 @@
 | Produce baseline metrics | Locked below |
 | Harden prompts / synonyms / evaluator from failure notes | Done |
 | Dry-run LoRA data prep (`train_lora_example.sh`) | Done — 15 train chat rows → `models/collections-lora/train_only.jsonl` (gitignored; local only) |
-| SME label review packet | Done — `baseline_sme_review.md` (async sign-off checkbox remains) |
+| SME label review packet | Done — `baseline_sme_review.md` (**CJ confirmed all 10 holdout labels 2026-10-12**) |
 
 ## Locked baseline metrics
 
@@ -76,7 +76,7 @@ Gold labels for all 10 holdout rows: **keep** (see `baseline_sme_review.md`).
 
 ## Week 2 entry criteria
 
-1. SME async sign-off on holdout labels (checkbox in `baseline_sme_review.md`)
+1. ~~SME async sign-off on holdout labels~~ **Done** (CJ 2026-10-12)
 2. GPU env with QLoRA (≈16–24GB VRAM) for `Qwen2.5-Coder-7B-Instruct`
 3. Train on `split=train` only; never fine-tune on holdout
 4. Success = beat Week 1 lock on action_match **and** push hallucination &lt; 0.05 while keeping policy_pass ≥ 0.95

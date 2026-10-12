@@ -46,8 +46,8 @@
 
 ## SME sign-off (async — Week 1 engineering complete)
 
-- [ ] Collections SME agrees all 10 holdout expected_actions stand
-- [ ] No gold row needs relabel before LoRA
+- [x] Collections SME agrees all 10 holdout expected_actions stand *(confirmed 2026-10-12 by CJ — all good)*
+- [x] No gold row needs relabel before LoRA
 - [x] Ollama baseline re-run completed after prompt/synonym/evaluator patches (see `week1_baseline_report.md`)
 
 ## Notes

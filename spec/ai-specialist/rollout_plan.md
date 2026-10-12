@@ -17,7 +17,7 @@
 - [x] Lock metrics in `spec/ai-specialist/week1_baseline_report.md`
 - [x] Prompt / synonym / evaluator hardening from failure notes (PR #8)
 - [x] Dry-run `scripts/train_lora_example.sh` (15 train chats prepared; no weight publish)
-- [ ] Collections SME formal checkbox sign-off (async; does not block Week 2 start)
+- [x] Collections SME formal checkbox sign-off *(CJ confirmed holdout labels 2026-10-12)*
 
 **Locked baseline:** action 0.60 · policy 1.00 · grounded 0.80 · halluc 0.20 · p50 ~9.2s
 
