@@ -13,6 +13,7 @@ import reconciliationRoutes from "./routes/reconciliations.js";
 import exceptionRoutes from "./routes/exceptions.js";
 import auditRoutes from "./routes/audit.js";
 import userRoutes from "./routes/users.js";
+import specRoutes from "./routes/specs.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 4000);
@@ -48,6 +49,7 @@ app.use("/api/v1/reconciliations", reconciliationRoutes);
 app.use("/api/v1/exceptions", exceptionRoutes);
 app.use("/api/v1/audit", auditRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/specs", specRoutes);
 
 // Production: serve built web client from the same host
 const webDist = path.join(__dirname, "../../web/dist");

@@ -2,7 +2,14 @@
 
 **Financial data graph** for continuous close & reconciliation.
 
-API-first control plane for **detect → investigate → resolve → report** on CRM invoice ↔ GL revenue breaks. The React app is one client; the HTTP API is the product.
+API-first control plane for **detect → investigate → resolve → report**.
+
+**Spec Studio dual path** (post-login `/studio`, portfolio Launch demo target):
+
+1. **Seeded** — open Meridian Retail CRM invoices ↔ GL revenue (`CRM_GL_REV`)
+2. **User-entered** — describe a need (e.g. “reconcile CC auth, settlements, and what we received”) → generate agent package → implement → run
+
+The React app is one client; the HTTP API is the product.
 
 ## Architecture
 
@@ -80,12 +87,17 @@ findatagraph/
 | POST | `/exceptions/:id/corrections` | Propose correction |
 | POST | `/exceptions/corrections/:id/decide` | Approve/reject |
 | GET | `/audit` | Audit trail (controller+) |
+| GET | `/specs/starting-points` | Dual-path chips (seeded + generate) |
+| POST | `/specs/generate` | NL / chip → agent package |
+| POST | `/specs/:id/implement` | Materialize definition (+ CC staging) |
+| GET | `/specs/usage` | Demo credit meter |
 
 ## UI architecture
 
 - **Auth gate** → JWT in `localStorage`, restored via `/auth/me`
 - **Shell** → sidebar nav + role display
-- **Pages:** Dashboard · Exceptions list/detail · Runs · Audit
+- **Pages:** Spec Studio · Dashboard · Exceptions list/detail · Runs · Audit
+- Default route after login: `/studio` (portfolio Launch demo uses `…/studio`)
 - **Data access:** thin `api()` client; no server state library in MVP (swap in React Query later)
 
 ## Quick start

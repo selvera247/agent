@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS source_systems (
   org_id        TEXT NOT NULL REFERENCES organizations(id),
   code          TEXT NOT NULL,
   name          TEXT NOT NULL,
-  kind          TEXT NOT NULL CHECK (kind IN ('erp', 'crm', 'billing', 'planning')),
+  kind          TEXT NOT NULL CHECK (kind IN ('erp', 'crm', 'billing', 'planning', 'processor', 'bank')),
   UNIQUE (org_id, code)
 );
 
@@ -74,10 +74,13 @@ CREATE TABLE IF NOT EXISTS reconciliation_definitions (
   code          TEXT NOT NULL,
   name          TEXT NOT NULL,
   description   TEXT NOT NULL,
-  left_system   TEXT NOT NULL,  -- e.g. crm
-  right_system  TEXT NOT NULL,  -- e.g. gl
+  left_system   TEXT NOT NULL,  -- e.g. crm | auth
+  right_system  TEXT NOT NULL,  -- e.g. gl | settlement_cash
+  match_kind    TEXT NOT NULL DEFAULT 'crm_gl', -- crm_gl | cc_auth_settle_cash
   tolerance_abs REAL NOT NULL DEFAULT 0.01,
   materiality_abs REAL NOT NULL DEFAULT 10000,
+  source        TEXT NOT NULL DEFAULT 'seeded', -- seeded | generated
+  spec_id       TEXT,
   active        INTEGER NOT NULL DEFAULT 1,
   UNIQUE (org_id, code)
 );
@@ -147,3 +150,78 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 
 CREATE INDEX IF NOT EXISTS idx_audit_org_created ON audit_log(org_id, created_at DESC);
+
+-- Spec Studio generated packages (dual-path intake)
+CREATE TABLE IF NOT EXISTS agent_specs (
+  id            TEXT PRIMARY KEY,
+  org_id        TEXT NOT NULL REFERENCES organizations(id),
+  template_id   TEXT NOT NULL,
+  need_text     TEXT NOT NULL,
+  title         TEXT NOT NULL,
+  status        TEXT NOT NULL CHECK (status IN ('draft', 'implemented')),
+  package_json  TEXT NOT NULL,
+  definition_id TEXT REFERENCES reconciliation_definitions(id),
+  created_by    TEXT REFERENCES users(id),
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  implemented_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_specs_org_created ON agent_specs(org_id, created_at DESC);
+
+-- Card auth ↔ settlement ↔ cash received staging
+CREATE TABLE IF NOT EXISTS cc_auths (
+  id            TEXT PRIMARY KEY,
+  org_id        TEXT NOT NULL REFERENCES organizations(id),
+  entity_id     TEXT NOT NULL REFERENCES entities(id),
+  auth_code     TEXT NOT NULL,
+  card_last4    TEXT NOT NULL,
+  auth_date     TEXT NOT NULL,
+  amount        REAL NOT NULL,
+  currency      TEXT NOT NULL DEFAULT 'USD',
+  source_system_id TEXT NOT NULL REFERENCES source_systems(id),
+  ingested_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (org_id, auth_code)
+);
+
+CREATE TABLE IF NOT EXISTS cc_settlements (
+  id            TEXT PRIMARY KEY,
+  org_id        TEXT NOT NULL REFERENCES organizations(id),
+  entity_id     TEXT NOT NULL REFERENCES entities(id),
+  auth_code     TEXT NOT NULL,
+  batch_id      TEXT NOT NULL,
+  settle_date   TEXT NOT NULL,
+  gross_amount  REAL NOT NULL,
+  fee_amount    REAL NOT NULL DEFAULT 0,
+  net_amount    REAL NOT NULL,
+  currency      TEXT NOT NULL DEFAULT 'USD',
+  source_system_id TEXT NOT NULL REFERENCES source_systems(id),
+  ingested_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (org_id, auth_code)
+);
+
+CREATE TABLE IF NOT EXISTS cc_receipts (
+  id            TEXT PRIMARY KEY,
+  org_id        TEXT NOT NULL REFERENCES organizations(id),
+  entity_id     TEXT NOT NULL REFERENCES entities(id),
+  batch_id      TEXT NOT NULL,
+  deposit_ref   TEXT NOT NULL,
+  received_date TEXT NOT NULL,
+  amount        REAL NOT NULL,
+  currency      TEXT NOT NULL DEFAULT 'USD',
+  source_system_id TEXT NOT NULL REFERENCES source_systems(id),
+  ingested_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (org_id, deposit_ref)
+);
+
+CREATE TABLE IF NOT EXISTS usage_events (
+  id            TEXT PRIMARY KEY,
+  org_id        TEXT NOT NULL REFERENCES organizations(id),
+  actor_id      TEXT REFERENCES users(id),
+  action        TEXT NOT NULL,
+  credits       INTEGER NOT NULL DEFAULT 0,
+  resource_type TEXT,
+  resource_id   TEXT,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_usage_org_created ON usage_events(org_id, created_at DESC);

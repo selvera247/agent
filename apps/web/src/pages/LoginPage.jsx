@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (token) return <Navigate to="/" replace />;
+  if (token) return <Navigate to="/studio" replace />;
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -18,7 +18,7 @@ export default function LoginPage() {
     setError("");
     try {
       await login(email, password);
-      navigate("/");
+      navigate("/studio");
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {
@@ -30,7 +30,9 @@ export default function LoginPage() {
     <div className="login-page">
       <form className="login-card" onSubmit={onSubmit}>
         <h1>FinDataGraph</h1>
-        <p className="sub">Sign in to your financial data graph.</p>
+        <p className="sub">
+          Sign in — Spec Studio dual path: seeded CRM↔GL or describe a new recon.
+        </p>
         {error ? <p className="error">{error}</p> : null}
         <div className="field">
           <label htmlFor="email">Email</label>

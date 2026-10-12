@@ -111,3 +111,78 @@ test("accountant entity scope enforced", async () => {
   }).then((r) => r.json());
   assert.ok(entities.data.every((e) => ["US-EAST", "US-WEST"].includes(e.code)));
 });
+
+test("spec studio seeded path reuses CRM_GL_REV", async () => {
+  const { token } = await login();
+  const gen = await fetch(`${BASE}/specs/generate`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      starting_point_id: "crm_to_accounting_revenue",
+      need: "continuous CRM-to-accounting revenue reconciliation with SOX lineage",
+    }),
+  });
+  assert.equal(gen.status, 201);
+  const generated = await gen.json();
+  assert.equal(generated.data.package.path, "seeded");
+  assert.ok(generated.data.package.reused_definition_id);
+
+  const impl = await fetch(`${BASE}/specs/${generated.data.id}/implement`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  assert.equal(impl.status, 200);
+  const implemented = await impl.json();
+  assert.equal(implemented.data.status, "implemented");
+  assert.equal(
+    implemented.data.definition_id,
+    generated.data.package.reused_definition_id
+  );
+});
+
+test("spec studio CC auth path generates and runs", async () => {
+  const { token } = await login();
+  const gen = await fetch(`${BASE}/specs/generate`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      need: "reconcile CC auth, settlements, and what we received",
+    }),
+  });
+  assert.equal(gen.status, 201);
+  const generated = await gen.json();
+  assert.equal(generated.data.template_id, "cc_auth_settle_cash");
+  assert.equal(generated.data.package.path, "generate");
+
+  const impl = await fetch(`${BASE}/specs/${generated.data.id}/implement`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  assert.equal(impl.status, 200);
+  const implemented = await impl.json();
+  assert.equal(implemented.data.status, "implemented");
+  assert.ok(implemented.data.definition_id);
+
+  const runRes = await fetch(
+    `${BASE}/reconciliations/${implemented.data.definition_id}/runs`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  assert.equal(runRes.status, 201);
+  const run = await runRes.json();
+  assert.equal(run.data.status, "completed");
+  assert.ok(run.data.exception_count > 0);
+
+  const usage = await fetch(`${BASE}/specs/usage`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => r.json());
+  assert.ok(usage.data.credits_used > 0);
+});

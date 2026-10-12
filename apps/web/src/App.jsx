@@ -7,6 +7,7 @@ import ExceptionsPage from "./pages/ExceptionsPage";
 import ExceptionDetailPage from "./pages/ExceptionDetailPage";
 import RunsPage from "./pages/RunsPage";
 import AuditPage from "./pages/AuditPage";
+import SpecStudioPage from "./pages/SpecStudioPage";
 
 function Protected({ children }) {
   const { token, booting } = useAuth();
@@ -27,13 +28,15 @@ export default function App() {
           </Protected>
         }
       >
-        <Route index element={<DashboardPage />} />
+        <Route index element={<Navigate to="/studio" replace />} />
+        <Route path="studio" element={<SpecStudioPage />} />
+        <Route path="dashboard" element={<DashboardPage />} />
         <Route path="exceptions" element={<ExceptionsPage />} />
         <Route path="exceptions/:id" element={<ExceptionDetailPage />} />
         <Route path="runs" element={<RunsPage />} />
         <Route path="audit" element={<AuditPage />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/studio" replace />} />
     </Routes>
   );
 }

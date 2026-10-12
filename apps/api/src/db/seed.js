@@ -104,8 +104,9 @@ export function seedDatabase({ force = false } = {}) {
   const defId = "rec_crm_gl_revenue";
   db.prepare(
     `INSERT INTO reconciliation_definitions
-      (id, org_id, code, name, description, left_system, right_system, tolerance_abs, materiality_abs)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      (id, org_id, code, name, description, left_system, right_system,
+       match_kind, tolerance_abs, materiality_abs, source, active)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'crm_gl', ?, ?, 'seeded', 1)`
   ).run(
     defId,
     orgId,
