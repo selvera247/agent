@@ -53,4 +53,4 @@
 ## Notes
 
 - `adapter_or_fallback` perfect scores are the **heuristic stub** (no LoRA weights), not a fine-tuned model.
-- Week 1 engineering closed; formal SME checkbox can complete in parallel with Week 2 LoRA prep.
+- Week 1 fully closed including SME label confirmation; ready for Week 2 LoRA.
