@@ -9,7 +9,7 @@ import CaseCallout from "../components/CaseCallout";
 /** Hosted FinDataGraph app — opens Spec Studio dual-path intake after login. */
 const FINDATAGRAPH_DEMO_HOST =
   import.meta.env.VITE_FINDATAGRAPH_DEMO_URL ||
-  "https://joyce-dealt-laden-cuts.trycloudflare.com";
+  "https://tremendous-thu-quite-encourage.trycloudflare.com";
 
 export const FINDATAGRAPH_DEMO_URL = FINDATAGRAPH_DEMO_HOST.replace(/\/$/, "") + "/studio";
 
