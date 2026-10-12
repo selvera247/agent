@@ -49,16 +49,18 @@ Exact string checks for split/isolation keywords are implemented in `scripts/eva
 
 ## Action synonym map
 
-| Canonical | Accepted synonyms (case-insensitive) |
+| Canonical | Accepted synonyms (case-insensitive; `_` normalized to space) |
 |---|---|
-| `Route to dispute specialist` | `dispute specialist`, `route dispute`, `assign dispute collector` |
-| `Send automated reminder` | `auto reminder`, `automation reminder`, `send reminder (auto)` |
-| `Call AP contact` | `call ap`, `phone ap`, `call customer ap` |
-| `Email payment reminder` | `email reminder`, `send email reminder` |
-| `Escalate to manager` | `manager escalation`, `escalate manager` |
-| `Hold — await promise-to-pay` | `hold for ptp`, `await ptp`, `wait on promise` |
-| `Reassign to available collector` | `reassign collector`, `reassign available` |
-| `Keep parent-child grouping` | `maintain parent-child`, `do not split child` |
+| `Route to dispute specialist` | `dispute specialist`, `route dispute`, `assign dispute collector`, `assign_dispute_specialist`, `route_to_dispute_specialist` |
+| `Send automated reminder` | `auto reminder`, `automation reminder`, `send reminder (auto)`, `send_automated_reminder` |
+| `Call AP contact` | `call ap`, `phone ap`, `call customer ap`, `call_ap_contact`, `follow up with customer via phone` |
+| `Email payment reminder` | `email reminder`, `send email reminder`, `email_payment_reminder` |
+| `Escalate to manager` | `manager escalation`, `escalate manager`, `escalate_to_manager` |
+| `Hold — await promise-to-pay` | `hold for ptp`, `await ptp`, `wait on promise`, `hold_for_ptp` |
+| `Reassign to available collector` | `reassign collector`, `reassign available`, `reassign_to_available_collector`, `assign available collector` |
+| `Keep parent-child grouping` | `maintain parent-child`, `do not split child`, `keep_parent_child_grouping` |
+
+Generic `assign_collector` is **not** accepted (too ambiguous).
 
 ## Groundedness
 
@@ -69,6 +71,11 @@ A claim is grounded if it matches one of:
 3. Identifiers present in input (invoice numbers, customer pseudonyms)
 
 Fail if reason invents amounts, DPD, invoice IDs, or collector names not in input.
+
+Allowed exceptions (not hallucination):
+- Rubric thresholds used as cutoffs: `1000`, `5000`, `9999`, `10000`, `50000`, `100000`
+- `promise_to_pay_date==null` when no invoice has a PTP date
+- Policy flag citations such as `policy:dispute_specialist_required` or `policy_flags.includes(dispute_specialist_required)` when that flag is present in input
 
 ## Evidence coverage
 

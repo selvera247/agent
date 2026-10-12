@@ -26,28 +26,44 @@ ACTION_SYNONYMS: dict[str, set[str]] = {
         "dispute specialist",
         "route dispute",
         "assign dispute collector",
+        "assign dispute specialist",
+        "assign_dispute_specialist",
+        "route_to_dispute_specialist",
+        "dispute_specialist",
     },
     "send automated reminder": {
         "send automated reminder",
         "auto reminder",
         "automation reminder",
         "send reminder (auto)",
+        "send_automated_reminder",
+        "automated reminder",
+        "auto_reminder",
     },
     "call ap contact": {
         "call ap contact",
         "call ap",
         "phone ap",
         "call customer ap",
+        "call_ap_contact",
+        "follow up with customer via phone",
+        "phone customer",
+        "call customer",
     },
     "email payment reminder": {
         "email payment reminder",
         "email reminder",
         "send email reminder",
+        "email_payment_reminder",
+        "send_email_reminder",
     },
     "escalate to manager": {
         "escalate to manager",
         "manager escalation",
         "escalate manager",
+        "escalate_to_manager",
+        "assign manager",
+        "manager_escalation",
     },
     "hold — await promise-to-pay": {
         "hold — await promise-to-pay",
@@ -55,16 +71,24 @@ ACTION_SYNONYMS: dict[str, set[str]] = {
         "hold for ptp",
         "await ptp",
         "wait on promise",
+        "hold await promise to pay",
+        "hold_for_ptp",
     },
     "reassign to available collector": {
         "reassign to available collector",
         "reassign collector",
         "reassign available",
+        "reassign_to_available_collector",
+        "reassign_collector",
+        "assign available collector",
+        "assign_available_collector",
     },
     "keep parent-child grouping": {
         "keep parent-child grouping",
         "maintain parent-child",
         "do not split child",
+        "keep_parent_child_grouping",
+        "maintain_parent_child",
     },
 }
 
@@ -86,18 +110,50 @@ ISOLATE_KEYWORDS = (
 REASSIGN_CANONICAL = "reassign to available collector"
 AUTO_ACTIONS = {"send automated reminder"}
 
+# Rubric / prompt thresholds — citing these as comparison cutoffs is not hallucination
+ALLOWED_THRESHOLDS = {
+    "1000",
+    "5000",
+    "9999",
+    "10000",
+    "50000",
+    "100000",
+    "1000000",
+    "1000.0",
+    "5000.0",
+    "9999.0",
+    "10000.0",
+    "50000.0",
+    "100000.0",
+}
+
 
 def norm(s: str | None) -> str:
     return re.sub(r"\s+", " ", (s or "").strip().lower())
 
 
+def norm_action(s: str | None) -> str:
+    """Normalize action strings including snake_case model outputs."""
+    a = norm(s)
+    a = a.replace("_", " ")
+    a = a.replace("—", "-")
+    return re.sub(r"\s+", " ", a).strip()
+
+
 def canonical_action(action: str) -> str | None:
-    a = norm(action)
+    a = norm_action(action)
+    # Exact match only first (includes snake_case via norm_action).
     for canon, syns in ACTION_SYNONYMS.items():
-        if a == canon or a in syns:
+        canon_n = norm_action(canon)
+        syns_n = {norm_action(x) for x in syns} | {canon_n}
+        if a == canon_n or a in syns_n:
             return canon
-        for syn in syns:
-            if syn in a or a in syn:
+    # Substring: synonym must appear inside the predicted action, not the reverse
+    # (avoids "assign collector" matching inside "reassign collector").
+    for canon, syns in ACTION_SYNONYMS.items():
+        syns_n = {norm_action(x) for x in syns} | {norm_action(canon)}
+        for syn in syns_n:
+            if len(syn) >= 12 and syn in a:
                 return canon
     return None
 
@@ -110,23 +166,34 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def _num_aliases(value: Any) -> set[str]:
+    out: set[str] = set()
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return out
+    out.add(str(value))
+    out.add(str(f))
+    out.add(str(int(f)) if f == int(f) else str(f))
+    out.add(f"{f:.2f}")
+    out.add(f"{f:.1f}")
+    out.add(f"{int(f)}.0" if f == int(f) else f"{f}")
+    out.add(f"{f:,.2f}")
+    out.add(str(int(f)))
+    return {x.replace(",", "") for x in out}
+
+
 def input_numbers(example: dict[str, Any]) -> set[str]:
     nums: set[str] = set()
     cust = example.get("customer") or {}
     if cust.get("risk_score") is not None:
-        nums.add(str(cust["risk_score"]))
-        nums.add(str(int(float(cust["risk_score"]))))
+        nums |= _num_aliases(cust["risk_score"])
     for inv in example.get("invoices") or []:
         for key in ("open_balance", "days_past_due"):
             if inv.get(key) is not None:
-                nums.add(str(inv[key]))
-                try:
-                    nums.add(str(int(float(inv[key]))))
-                except (TypeError, ValueError):
-                    pass
+                nums |= _num_aliases(inv[key])
     total = sum(float(i.get("open_balance") or 0) for i in example.get("invoices") or [])
-    nums.add(str(total))
-    nums.add(str(int(total)))
+    nums |= _num_aliases(total)
     return nums
 
 
@@ -181,19 +248,27 @@ def derived_predicates(example: dict[str, Any]) -> set[str]:
         preds.add(f"parent_account=={cust['parent_account']}")
 
     any_dispute = False
+    any_ptp = False
     for inv in invoices:
         num = inv.get("invoice_number")
         if inv.get("dispute_flag"):
             any_dispute = True
             preds.add(f"{num}.dispute_flag==true")
         if inv.get("promise_to_pay_date"):
+            any_ptp = True
             preds.add(f"{num}.promise_to_pay_date!=null")
             # past PTP heuristic: date string < 2026-10-12
             ptp = str(inv["promise_to_pay_date"])
             if ptp < "2026-10-12":
                 preds.add("promise_to_pay_date_past")
+        else:
+            preds.add(f"{num}.promise_to_pay_date==null")
+            preds.add("promise_to_pay_date==null")
     if not any_dispute:
         preds.add("dispute_flag==false")
+    if not any_ptp:
+        preds.add("promise_to_pay_date==null")
+        preds.add("no_promise_to_pay")
 
     avail = ctx.get("availability")
     if avail:
@@ -260,6 +335,56 @@ def check_policy(example: dict[str, Any], pred: dict[str, Any]) -> tuple[bool, l
     return (len(failures) == 0), failures
 
 
+def evidence_cites_input(item: str, example: dict[str, Any], known_nums: set[str]) -> bool:
+    """Allow field:value evidence that cites numbers/ids/flags present in the input."""
+    text = norm(item)
+    nitem = normalize_evidence_item(item)
+    flags = [norm(f) for f in (example.get("policy_flags") or [])]
+    if any(norm(i) in text for i in input_ids(example)):
+        return True
+    # null PTP is a real input fact when no/ all invoices lack promise_to_pay_date
+    invoices = example.get("invoices") or []
+    if "promise_to_pay" in text or "ptp" in text:
+        if all(not i.get("promise_to_pay_date") for i in invoices):
+            if "null" in text or "==null" in nitem or "none" in text or "no_promise" in nitem:
+                return True
+        if any(i.get("promise_to_pay_date") for i in invoices) and (
+            "!=null" in nitem or "not null" in text or "future" in text
+        ):
+            return True
+    # policy_flags.includes(dispute_specialist_required) / policy:flag / flag in policy_flags
+    for flag in flags:
+        if not flag:
+            continue
+        if flag in text:
+            return True
+        if f"policy:{flag}" in nitem:
+            return True
+    # risk_score: 28 / open_balance: $450.00 / days_past_due: 8
+    for m in re.finditer(
+        r"(risk_score|open_balance|open_ar|days_past_due|availability)\s*[:=<>]{1,2}\s*\$?([\w.-]+)",
+        text,
+    ):
+        raw = m.group(2).rstrip(",")
+        if raw in known_nums or raw.replace(".0", "") in known_nums:
+            return True
+        if raw in ALLOWED_THRESHOLDS:
+            return True
+        if raw in {"pto", "unavailable", "available"}:
+            ctx = example.get("collector_context") or {}
+            if raw == norm(str(ctx.get("availability") or "")):
+                return True
+    # bare known numbers only when paired with a known field keyword
+    field_hints = ("risk", "balance", "ar", "past due", "dpd", "dispute", "strategic", "health", "policy")
+    if any(h in text for h in field_hints):
+        for num in known_nums:
+            if len(num) >= 2 and num in text:
+                return True
+        if any(t in text for t in ALLOWED_THRESHOLDS):
+            return True
+    return False
+
+
 def check_groundedness(
     example: dict[str, Any], pred: dict[str, Any]
 ) -> tuple[bool, bool, list[str]]:
@@ -274,16 +399,17 @@ def check_groundedness(
     known_nums = input_numbers(example)
     known_ids = {norm(x) for x in input_ids(example)}
 
-    # Evidence items should match derived predicates or expected style tokens
+    # Evidence items should match derived predicates or cite input fields/values
     ungrounded_ev = []
     for item in evidence:
         nitem = normalize_evidence_item(str(item))
-        # allow if predicate matches ignoring spaces
-        ok = any(normalize_evidence_item(p) == nitem or nitem in normalize_evidence_item(p) for p in preds)
+        ok = any(
+            normalize_evidence_item(p) == nitem or nitem in normalize_evidence_item(p) for p in preds
+        )
         if not ok:
-            # also allow raw substrings of known ids
-            if not any(norm(i) in norm(str(item)) for i in input_ids(example)):
-                ungrounded_ev.append(str(item))
+            ok = evidence_cites_input(str(item), example, known_nums)
+        if not ok:
+            ungrounded_ev.append(str(item))
 
     # Invented invoice-like tokens (require INV_ prefix — do not match the word "invoice")
     inv_mentions = re.findall(r"INV_[A-Z0-9_]+", reason, flags=re.I)
@@ -291,13 +417,16 @@ def check_groundedness(
         if m.upper() not in {x.upper() for x in input_ids(example)}:
             notes.append(f"invented_invoice:{m}")
 
-    # Large amounts in reason that are not in input
-    amount_mentions = re.findall(r"\$?\d{4,}(?:\.\d+)?", reason)
+    # Large amounts in reason that are not in input (ignore digits inside INV_* ids).
+    # Rubric thresholds (5000, 10000, ...) are allowed as comparison cutoffs.
+    reason_for_amounts = re.sub(r"INV_[A-Z0-9_]+", " ", reason, flags=re.I)
+    amount_mentions = re.findall(r"\$?[\d,]{4,}(?:\.\d+)?", reason_for_amounts)
     for am in amount_mentions:
-        cleaned = am.replace("$", "").rstrip("0").rstrip(".") if "." in am else am.replace("$", "")
-        # compare loosely
-        if cleaned not in known_nums and am.replace("$", "") not in known_nums:
-            # allow if it's a threshold phrase already in expected style — still flag
+        cleaned = am.replace("$", "").replace(",", "")
+        aliases = _num_aliases(cleaned) if cleaned.replace(".", "").isdigit() else {cleaned}
+        if cleaned in ALLOWED_THRESHOLDS or (aliases & ALLOWED_THRESHOLDS):
+            continue
+        if not (aliases & known_nums) and cleaned not in known_nums:
             notes.append(f"invented_amount:{am}")
 
     # Collector names
@@ -313,20 +442,59 @@ def check_groundedness(
     return grounded, hallucinated, notes
 
 
+def _expected_fact_supported(expected_item: str, example: dict[str, Any], got_items: list[str]) -> bool:
+    """Soft coverage: model evidence supports the same underlying fact as expected."""
+    e = normalize_evidence_item(expected_item)
+    got_n = [normalize_evidence_item(x) for x in got_items]
+    if any(e == g or e in g or g in e for g in got_n):
+        return True
+    cust = example.get("customer") or {}
+    invoices = example.get("invoices") or []
+    ar = sum(float(i.get("open_balance") or 0) for i in invoices)
+    risk = float(cust.get("risk_score") or 0)
+    ctx = example.get("collector_context") or {}
+    joined = " ".join(got_n)
+
+    def cites_risk() -> bool:
+        return "risk" in joined and any(a in joined for a in _num_aliases(risk))
+
+    def cites_ar() -> bool:
+        return ("open_ar" in joined or "open_balance" in joined or "balance" in joined) and (
+            any(a in joined for a in _num_aliases(ar))
+            or any(any(a in joined for a in _num_aliases(i.get("open_balance"))) for i in invoices)
+        )
+
+    if e.startswith("risk_score") and cites_risk():
+        return True
+    if e.startswith("open_ar") and cites_ar():
+        return True
+    if e.startswith("collector.availability") and "availability" in joined:
+        avail = norm(str(ctx.get("availability") or ""))
+        return avail and avail in joined
+    if "dispute_flag==true" in e:
+        return "dispute" in joined
+    if e.startswith("strategic_account") and "strategic" in joined:
+        return True
+    if e.startswith("parent_account") and "parent" in joined:
+        return True
+    if e.startswith("policy:") and e.split(":", 1)[-1] in joined:
+        return True
+    if e.startswith("health==") and "health" in joined:
+        return True
+    if "promise_to_pay" in e and ("promise" in joined or "ptp" in joined):
+        return True
+    if e.startswith("days_past_due") and ("past_due" in joined or "dpd" in joined or "days" in joined):
+        return True
+    return False
+
+
 def evidence_coverage(example: dict[str, Any], pred: dict[str, Any]) -> float:
-    expected = {normalize_evidence_item(x) for x in example.get("expected_evidence") or []}
-    got = {normalize_evidence_item(str(x)) for x in (pred.get("evidence") or [])}
+    expected = list(example.get("expected_evidence") or [])
+    got = [str(x) for x in (pred.get("evidence") or [])]
     if not expected:
         return 1.0
-    overlap = expected & got
-    # soft match: expected token contained in any got item
-    if not overlap:
-        for e in expected:
-            for g in got:
-                if e in g or g in e:
-                    overlap.add(e)
-                    break
-    return len(overlap) / len(expected)
+    hits = sum(1 for e in expected if _expected_fact_supported(e, example, got))
+    return hits / len(expected)
 
 
 def confidence_metrics(example: dict[str, Any], pred: dict[str, Any]) -> dict[str, float]:

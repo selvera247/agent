@@ -6,7 +6,7 @@
 | **SME reviewer** | Collections SME (AR lifecycle) |
 | **Engineering** | Agent eval + LoRA training |
 | **Repo** | `selvera247/agent` |
-| **Status** | Week 0 scaffold (specs + gold set + evaluator) |
+| **Status** | Week 1 complete — Ollama baseline locked; Week 2 LoRA next |
 
 ## Scope
 
@@ -24,16 +24,19 @@ Trained on **pseudonymized** internal AR/aging/recommendation lifecycle patterns
 - Pushing datasets/weights to public services
 - Full Peak V3 collections runtime (paths `docs/peak-v3/*`, `backend/app/intelligence/*` are not yet in this repo; policies are encoded from product brief + FinDataGraph AR signals)
 
-## Deliverables (Week 0)
+## Deliverables
 
 | Artifact | Path |
 |---|---|
 | Specs | `spec/ai-specialist/*.md` |
+| Week 1 baseline report | `spec/ai-specialist/week1_baseline_report.md` |
 | Gold examples (25; ≥10 holdout) | `data/collections_specialist/examples.jsonl` |
 | Dataset builder | `scripts/build_collections_dataset.py` |
 | Evaluator + local runner | `scripts/evaluate_*.py`, `scripts/run_local_eval.py` |
 | Config / prompts / LoRA starter | `configs/`, `prompts/`, `scripts/train_lora_example.sh` |
 | Ollama serving notes | `docs/ai-serving/OLLAMA_README.md` |
+
+**Week 1 lock:** action 0.60 · policy 1.00 · grounded 0.80 · halluc 0.20 (`qwen2.5-coder:7b`)
 
 ## Acceptance criteria (before internal rollout)
 
