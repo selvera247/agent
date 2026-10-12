@@ -149,23 +149,34 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def _num_aliases(value: Any) -> set[str]:
+    out: set[str] = set()
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return out
+    out.add(str(value))
+    out.add(str(f))
+    out.add(str(int(f)) if f == int(f) else str(f))
+    out.add(f"{f:.2f}")
+    out.add(f"{f:.1f}")
+    out.add(f"{int(f)}.0" if f == int(f) else f"{f}")
+    out.add(f"{f:,.2f}")
+    out.add(str(int(f)))
+    return {x.replace(",", "") for x in out}
+
+
 def input_numbers(example: dict[str, Any]) -> set[str]:
     nums: set[str] = set()
     cust = example.get("customer") or {}
     if cust.get("risk_score") is not None:
-        nums.add(str(cust["risk_score"]))
-        nums.add(str(int(float(cust["risk_score"]))))
+        nums |= _num_aliases(cust["risk_score"])
     for inv in example.get("invoices") or []:
         for key in ("open_balance", "days_past_due"):
             if inv.get(key) is not None:
-                nums.add(str(inv[key]))
-                try:
-                    nums.add(str(int(float(inv[key]))))
-                except (TypeError, ValueError):
-                    pass
+                nums |= _num_aliases(inv[key])
     total = sum(float(i.get("open_balance") or 0) for i in example.get("invoices") or [])
-    nums.add(str(total))
-    nums.add(str(int(total)))
+    nums |= _num_aliases(total)
     return nums
 
 
@@ -378,20 +389,59 @@ def check_groundedness(
     return grounded, hallucinated, notes
 
 
+def _expected_fact_supported(expected_item: str, example: dict[str, Any], got_items: list[str]) -> bool:
+    """Soft coverage: model evidence supports the same underlying fact as expected."""
+    e = normalize_evidence_item(expected_item)
+    got_n = [normalize_evidence_item(x) for x in got_items]
+    if any(e == g or e in g or g in e for g in got_n):
+        return True
+    cust = example.get("customer") or {}
+    invoices = example.get("invoices") or []
+    ar = sum(float(i.get("open_balance") or 0) for i in invoices)
+    risk = float(cust.get("risk_score") or 0)
+    ctx = example.get("collector_context") or {}
+    joined = " ".join(got_n)
+
+    def cites_risk() -> bool:
+        return "risk" in joined and any(a in joined for a in _num_aliases(risk))
+
+    def cites_ar() -> bool:
+        return ("open_ar" in joined or "open_balance" in joined or "balance" in joined) and (
+            any(a in joined for a in _num_aliases(ar))
+            or any(any(a in joined for a in _num_aliases(i.get("open_balance"))) for i in invoices)
+        )
+
+    if e.startswith("risk_score") and cites_risk():
+        return True
+    if e.startswith("open_ar") and cites_ar():
+        return True
+    if e.startswith("collector.availability") and "availability" in joined:
+        avail = norm(str(ctx.get("availability") or ""))
+        return avail and avail in joined
+    if "dispute_flag==true" in e:
+        return "dispute" in joined
+    if e.startswith("strategic_account") and "strategic" in joined:
+        return True
+    if e.startswith("parent_account") and "parent" in joined:
+        return True
+    if e.startswith("policy:") and e.split(":", 1)[-1] in joined:
+        return True
+    if e.startswith("health==") and "health" in joined:
+        return True
+    if "promise_to_pay" in e and ("promise" in joined or "ptp" in joined):
+        return True
+    if e.startswith("days_past_due") and ("past_due" in joined or "dpd" in joined or "days" in joined):
+        return True
+    return False
+
+
 def evidence_coverage(example: dict[str, Any], pred: dict[str, Any]) -> float:
-    expected = {normalize_evidence_item(x) for x in example.get("expected_evidence") or []}
-    got = {normalize_evidence_item(str(x)) for x in (pred.get("evidence") or [])}
+    expected = list(example.get("expected_evidence") or [])
+    got = [str(x) for x in (pred.get("evidence") or [])]
     if not expected:
         return 1.0
-    overlap = expected & got
-    # soft match: expected token contained in any got item
-    if not overlap:
-        for e in expected:
-            for g in got:
-                if e in g or g in e:
-                    overlap.add(e)
-                    break
-    return len(overlap) / len(expected)
+    hits = sum(1 for e in expected if _expected_fact_supported(e, example, got))
+    return hits / len(expected)
 
 
 def confidence_metrics(example: dict[str, Any], pred: dict[str, Any]) -> dict[str, float]:

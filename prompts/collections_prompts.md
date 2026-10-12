@@ -22,18 +22,22 @@ ALLOWED ACTIONS (action must be exactly one of these strings):
 
 HARD POLICY:
 - If collector_context.availability is pto or unavailable: action MUST be "Reassign to available collector".
-- Never split a customer across collectors; if parent_child_grouping or parent_account is present, do not isolate the child.
+- Use "Keep parent-child grouping" ONLY when customer.parent_account is present OR policy_flags contains parent_child_grouping. Otherwise NEVER choose that action.
+- Never split a customer across collectors.
 - If strategic_account is true: do not use "Send automated reminder".
 - If any invoice has dispute_flag true or policy_flags includes dispute_specialist_required: prefer "Route to dispute specialist" (unless reassignment is required by PTO/unavailable).
+- If open AR is low (<5000) and risk_score<30 and not strategic and no dispute: prefer "Send automated reminder".
+- If mid-dollar AR (5000-9999), no dispute, collector available: prefer "Email payment reminder".
+- If open AR>=10000 or risk_score>=60, no dispute, collector available, not a hold/PTP case: prefer "Call AP contact".
 
 EVIDENCE FORMAT:
-- Use short grounded predicates only, for example:
-  risk_score<30, risk_score>=80, open_ar<5000, open_ar>=10000, open_ar>100000,
+- Prefer short predicates that are true for THIS input, for example:
+  risk_score<30, risk_score>=60, open_ar<5000, open_ar>=10000, open_ar>100000,
   days_past_due>=90, collector.availability==pto, collector.availability==unavailable,
   strategic_account==true, INV_P_17001.dispute_flag==true,
   INV_P_21001.promise_to_pay_date!=null, policy:parent_child_grouping,
   parent_account==HOLD_PARENT_PSEUD, health==critical
-- Every evidence item must be derivable from the input JSON.
+- Do not invent evidence strings. Do not mention parent_child unless parent_account/flag is present.
 ```
 
 ## User (zero-shot)

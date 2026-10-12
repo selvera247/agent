@@ -1,8 +1,16 @@
 # SME holdout review — Ollama baseline (Week 1)
 
 **Source run:** local Ollama `qwen2.5-coder:7b` via `scripts/run_local_eval.py`  
-**Baseline metrics:** action_match 0.50 · policy_pass 0.80 · groundedness 0.50 · hallucination 0.50 · p50 ~9.5s  
 **Reviewer ask:** Confirm gold labels for top failures (below). Model errors ≠ label errors unless noted.
+
+## Metric trajectory
+
+| Run | action_match | policy_pass | groundedness | hallucination | p50 |
+|---|---|---|---|---|---|
+| Pre-prompt patch | 0.50 | 0.80 | 0.50 | 0.50 | ~9.5s |
+| Post allowed-action prompt | **0.70** | **1.00** | 0.40 | 0.60 | ~8.0s |
+
+Policy hard-fails cleared. Remaining issues: over-use of `Keep parent-child grouping` on non-parent rows, and evidence/reason grounding (often **action correct** but evidence format fails).
 
 ## Top failure cases — gold label verdict
 
