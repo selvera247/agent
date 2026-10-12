@@ -171,6 +171,59 @@ class EvaluatorTests(unittest.TestCase):
         self.assertTrue(score["action_match"])
         self.assertTrue(score["overall_pass"])
 
+    def test_threshold_in_reason_not_hallucination(self):
+        ex = base_example(
+            customer={
+                "id": "cust_t",
+                "name": "TEST_PSEUD",
+                "risk_score": 28,
+                "health": "healthy",
+                "strategic_account": False,
+                "last_contact_at": None,
+            },
+            invoices=[
+                {
+                    "invoice_number": "INV_P_16001",
+                    "days_past_due": 8,
+                    "open_balance": 450.0,
+                    "dispute_flag": False,
+                    "promise_to_pay_date": None,
+                }
+            ],
+            policy_flags=["low_dollar_quick_win"],
+            expected_action="Send automated reminder",
+            expected_evidence=["open_ar<5000", "risk_score<30"],
+            collector_context={
+                "assigned_collector": "col_auto",
+                "availability": "available",
+                "skill": "automation",
+            },
+        )
+        pred = {
+            "action": "Send automated reminder",
+            "reason": "Open AR is under 5000 and risk is 28.",
+            "confidence": 0.75,
+            "evidence": ["open_ar<5000", "risk_score<30"],
+        }
+        score = score_example(ex, pred)
+        self.assertFalse(score["hallucinated"], score["groundedness_notes"])
+        self.assertTrue(score["overall_pass"])
+
+    def test_policy_flags_includes_evidence_grounded(self):
+        ex = base_example()
+        pred = {
+            "action": "Route to dispute specialist",
+            "reason": "Dispute specialist required by policy.",
+            "confidence": 0.85,
+            "evidence": [
+                "policy_flags.includes(dispute_specialist_required)",
+                "INV_P_9.dispute_flag==true",
+            ],
+        }
+        score = score_example(ex, pred)
+        self.assertFalse(score["hallucinated"], score["groundedness_notes"])
+        self.assertTrue(score["grounded"])
+
     def test_soft_evidence_coverage_field_values(self):
         ex = base_example(
             customer={

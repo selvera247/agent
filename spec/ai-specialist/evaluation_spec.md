@@ -72,6 +72,10 @@ A claim is grounded if it matches one of:
 
 Fail if reason invents amounts, DPD, invoice IDs, or collector names not in input.
 
+Allowed exceptions (not hallucination):
+- Rubric thresholds used as cutoffs: `1000`, `5000`, `10000`, `50000`, `100000`
+- Policy flag citations such as `policy:dispute_specialist_required` or `policy_flags.includes(dispute_specialist_required)` when that flag is present in input
+
 ## Evidence coverage
 
 - Require **≥ 1** overlap between model `evidence` and `expected_evidence` (normalized)

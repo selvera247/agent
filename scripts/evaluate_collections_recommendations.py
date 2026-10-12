@@ -110,6 +110,21 @@ ISOLATE_KEYWORDS = (
 REASSIGN_CANONICAL = "reassign to available collector"
 AUTO_ACTIONS = {"send automated reminder"}
 
+# Rubric / prompt thresholds — citing these as comparison cutoffs is not hallucination
+ALLOWED_THRESHOLDS = {
+    "1000",
+    "5000",
+    "10000",
+    "50000",
+    "100000",
+    "1000000",
+    "1000.0",
+    "5000.0",
+    "10000.0",
+    "50000.0",
+    "100000.0",
+}
+
 
 def norm(s: str | None) -> str:
     return re.sub(r"\s+", " ", (s or "").strip().lower())
@@ -311,28 +326,41 @@ def check_policy(example: dict[str, Any], pred: dict[str, Any]) -> tuple[bool, l
 
 
 def evidence_cites_input(item: str, example: dict[str, Any], known_nums: set[str]) -> bool:
-    """Allow field:value evidence that cites numbers/ids present in the input."""
+    """Allow field:value evidence that cites numbers/ids/flags present in the input."""
     text = norm(item)
+    flags = [norm(f) for f in (example.get("policy_flags") or [])]
     if any(norm(i) in text for i in input_ids(example)):
         return True
+    # policy_flags.includes(dispute_specialist_required) / policy:flag / flag in policy_flags
+    for flag in flags:
+        if not flag:
+            continue
+        if flag in text:
+            return True
+        if f"policy:{flag}" in normalize_evidence_item(item):
+            return True
     # risk_score: 28 / open_balance: $450.00 / days_past_due: 8
     for m in re.finditer(
-        r"(risk_score|open_balance|open_ar|days_past_due|availability)\s*[:=]\s*\$?([\w.-]+)",
+        r"(risk_score|open_balance|open_ar|days_past_due|availability)\s*[:=<>]{1,2}\s*\$?([\w.-]+)",
         text,
     ):
         raw = m.group(2).rstrip(",")
         if raw in known_nums or raw.replace(".0", "") in known_nums:
+            return True
+        if raw in ALLOWED_THRESHOLDS:
             return True
         if raw in {"pto", "unavailable", "available"}:
             ctx = example.get("collector_context") or {}
             if raw == norm(str(ctx.get("availability") or "")):
                 return True
     # bare known numbers only when paired with a known field keyword
-    field_hints = ("risk", "balance", "ar", "past due", "dpd", "dispute", "strategic", "health")
+    field_hints = ("risk", "balance", "ar", "past due", "dpd", "dispute", "strategic", "health", "policy")
     if any(h in text for h in field_hints):
         for num in known_nums:
             if len(num) >= 2 and num in text:
                 return True
+        if any(t in text for t in ALLOWED_THRESHOLDS):
+            return True
     return False
 
 
@@ -368,12 +396,16 @@ def check_groundedness(
         if m.upper() not in {x.upper() for x in input_ids(example)}:
             notes.append(f"invented_invoice:{m}")
 
-    # Large amounts in reason that are not in input (ignore digits inside INV_* ids)
+    # Large amounts in reason that are not in input (ignore digits inside INV_* ids).
+    # Rubric thresholds (5000, 10000, ...) are allowed as comparison cutoffs.
     reason_for_amounts = re.sub(r"INV_[A-Z0-9_]+", " ", reason, flags=re.I)
-    amount_mentions = re.findall(r"\$?\d{4,}(?:\.\d+)?", reason_for_amounts)
+    amount_mentions = re.findall(r"\$?[\d,]{4,}(?:\.\d+)?", reason_for_amounts)
     for am in amount_mentions:
-        cleaned = am.replace("$", "").rstrip("0").rstrip(".") if "." in am else am.replace("$", "")
-        if cleaned not in known_nums and am.replace("$", "") not in known_nums:
+        cleaned = am.replace("$", "").replace(",", "")
+        aliases = _num_aliases(cleaned) if cleaned.replace(".", "").isdigit() else {cleaned}
+        if cleaned in ALLOWED_THRESHOLDS or (aliases & ALLOWED_THRESHOLDS):
+            continue
+        if not (aliases & known_nums) and cleaned not in known_nums:
             notes.append(f"invented_amount:{am}")
 
     # Collector names

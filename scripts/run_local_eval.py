@@ -56,9 +56,11 @@ HARD POLICY:
 - Never split a customer across collectors.
 - If strategic_account is true: do not use "Send automated reminder".
 - If any invoice has dispute_flag true or policy_flags includes dispute_specialist_required: prefer "Route to dispute specialist" (unless reassignment is required by PTO/unavailable).
+- If customer.parent_account is present OR policy_flags contains parent_child_grouping: prefer "Keep parent-child grouping" over call/email unless PTO reassignment or dispute routing is required.
+- If any invoice has a future promise_to_pay_date and risk_score<50: prefer "Hold — await promise-to-pay".
 - If open AR is low (<5000) and risk_score<30 and not strategic and no dispute: prefer "Send automated reminder".
-- If mid-dollar AR (5000-9999), no dispute, collector available: prefer "Email payment reminder".
-- If open AR>=10000 or risk_score>=60, no dispute, collector available, not a hold/PTP case: prefer "Call AP contact".
+- If mid-dollar AR (5000-9999), no dispute, collector available, no future PTP: prefer "Email payment reminder".
+- If open AR>=10000 or risk_score>=60, no dispute, collector available, no parent-child grouping case, not a hold/PTP case: prefer "Call AP contact".
 
 EVIDENCE FORMAT:
 - Prefer short predicates that are true for THIS input, for example:
