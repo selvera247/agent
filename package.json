@@ -1,19 +1,24 @@
 {
-  "name": "peak-close-continuous-reconciliation",
+  "name": "findatagraph",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "0.1.0",
+  "description": "FinDataGraph — financial data graph for continuous close & reconciliation",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "npm run dev -w @findatagraph/api & npm run dev -w @findatagraph/web",
+    "dev:api": "npm run dev -w @findatagraph/api",
+    "dev:web": "npm run dev -w @findatagraph/web",
+    "build": "npm run build -w @findatagraph/shared && npm run build -w @findatagraph/api && npm run build -w @findatagraph/web",
+    "start": "npm run start -w @findatagraph/api",
+    "build:web": "npm run build -w @findatagraph/web",
+    "start:prod": "npm run build:web && NODE_ENV=production CORS_ORIGIN=* npm run start -w @findatagraph/api",
+    "db:seed": "npm run db:seed -w @findatagraph/api",
+    "test": "npm run test -w @findatagraph/api"
   },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.7.0",
-    "vite": "^5.0.0"
+  "engines": {
+    "node": ">=18"
   }
 }

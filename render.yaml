@@ -1,0 +1,22 @@
+# One-click: https://render.com/deploy?repo=https://github.com/selvera247/agent
+services:
+  - type: web
+    name: findatagraph
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: DATABASE_PATH
+        value: /data/findatagraph.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: "*"
+    disk:
+      name: findatagraph-data
+      mountPath: /data
+      sizeGB: 1

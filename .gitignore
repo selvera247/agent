@@ -1,6 +1,14 @@
 node_modules/
 dist/
+build/
 .DS_Store
 *.local
 .env
 .env.*
+!.env.example
+*.db
+*.db-journal
+coverage/
+.vite/
+apps/api/data/
+*.log
