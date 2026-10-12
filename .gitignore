@@ -12,3 +12,11 @@ coverage/
 .vite/
 apps/api/data/
 *.log
+
+# Collections specialist — local weights & internal maps only
+models/
+artifacts/
+data/collections_specialist/internal/
+*.gguf
+adapter_model.bin
+adapter_config.json
