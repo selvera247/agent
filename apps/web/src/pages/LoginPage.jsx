@@ -37,14 +37,53 @@ export default function LoginPage() {
     }
   }
 
+  const localForm = allowLocal ? (
+    <form onSubmit={onSubmit} style={{ marginTop: mode === "local" ? 0 : "0.75rem" }}>
+      <div className="field">
+        <label htmlFor="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          autoComplete="username"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div className="field">
+        <label htmlFor="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      <button className="btn" type="submit" disabled={loading}>
+        {loading ? "Signing in…" : "Sign in"}
+      </button>
+      <p className="hint">
+        Demo users (password <code>password123</code>):
+        <br />
+        controller@findatagraph.demo · accountant@findatagraph.demo ·
+        admin@findatagraph.demo
+      </p>
+    </form>
+  ) : null;
+
   return (
     <div className="login-page">
       <div className="login-card">
         <h1>{title}</h1>
         <p className="sub">
-          Preferred IdPs: <strong>Okta</strong> or <strong>Clerk</strong>. Mode:{" "}
-          <code>{mode}</code>
-          {allowLocal ? " · local demo login enabled" : ""}.
+          Auth mode: <code>{mode}</code>
+          {mode === "clerk"
+            ? " — use Clerk below (primary)."
+            : mode === "okta"
+              ? " — use Okta below (primary)."
+              : " — Jumpstart demo login."}
         </p>
         {error ? <p className="error">{error}</p> : null}
 
@@ -54,45 +93,13 @@ export default function LoginPage() {
 
         {mode === "okta" ? <OktaSignInPanel onError={setError} /> : null}
 
-        {allowLocal ? (
-          <form onSubmit={onSubmit} style={{ marginTop: mode === "local" ? 0 : "1.25rem" }}>
-            {mode !== "local" ? (
-              <p className="hint" style={{ marginBottom: "0.75rem" }}>
-                Jumpstart demo users (local fallback)
-              </p>
-            ) : null}
-            <div className="field">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="username"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <button className="btn" type="submit" disabled={loading}>
-              {loading ? "Signing in…" : "Sign in"}
-            </button>
-            <p className="hint">
-              Demo users (password <code>password123</code>):
-              <br />
-              controller@findatagraph.demo · accountant@findatagraph.demo ·
-              admin@findatagraph.demo
-            </p>
-          </form>
+        {mode === "local" ? localForm : null}
+
+        {allowLocal && mode !== "local" ? (
+          <details className="local-fallback" style={{ marginTop: "1.25rem" }}>
+            <summary>Jumpstart demo login (local fallback)</summary>
+            {localForm}
+          </details>
         ) : null}
 
         {!allowLocal && mode === "local" ? (
