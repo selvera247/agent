@@ -6,13 +6,155 @@ import { recordUsage } from "../lib/usage.js";
 import { runReconciliation } from "./matching.js";
 import { buildJumpstartReport } from "./report.js";
 import { listConnectors, syncConnector } from "./connectors.js";
+import { investigateRun } from "./investigate.js";
+
+function orchestratorUrl() {
+  return (process.env.ORCHESTRATOR_URL || "").replace(/\/$/, "");
+}
 
 /**
- * Thin multi-agent cluster orchestrator.
- * Sequences connector freshness → detect → investigate → report
- * with human-on-the-loop resolve left to the control plane UI.
+ * Prefer LangGraph Python orchestrator when ORCHESTRATOR_URL is set;
+ * otherwise run the equivalent graph locally (parity fallback).
  */
-export function runJumpstartCluster({
+export async function runJumpstartCluster({
+  orgId,
+  userId,
+  definitionId = null,
+  agentId = JUMPSTART_AGENTS.CRM_GL,
+  syncConnectors = true,
+  authToken = null,
+}) {
+  const base = orchestratorUrl();
+  if (base) {
+    return runViaLangGraph({
+      base,
+      orgId,
+      userId,
+      definitionId,
+      agentId,
+      syncConnectors,
+      authToken,
+    });
+  }
+  return runLocalGraph({
+    orgId,
+    userId,
+    definitionId,
+    agentId,
+    syncConnectors,
+  });
+}
+
+async function runViaLangGraph({
+  base,
+  orgId,
+  userId,
+  definitionId,
+  agentId,
+  syncConnectors,
+  authToken,
+}) {
+  const db = getDb();
+  const clusterId = id("clrun");
+  const startedAt = new Date().toISOString();
+  db.prepare(
+    `INSERT INTO cluster_runs
+      (id, org_id, agent_id, definition_id, status, steps_json, triggered_by, started_at)
+     VALUES (?, ?, ?, ?, 'running', '[]', ?, ?)`
+  ).run(clusterId, orgId, agentId, definitionId, userId, startedAt);
+
+  writeAudit({
+    orgId,
+    actorId: userId,
+    action: AUDIT_ACTIONS.CLUSTER_STARTED,
+    resourceType: "cluster_run",
+    resourceId: clusterId,
+    payload: { agent_id: agentId, engine: "langgraph" },
+  });
+
+  try {
+    const res = await fetch(`${base}/v1/cluster/run`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        "X-Org-Id": orgId,
+        "X-User-Id": userId,
+      },
+      body: JSON.stringify({
+        org_id: orgId,
+        user_id: userId,
+        definition_id: definitionId,
+        agent_id: agentId,
+        sync_connectors: syncConnectors,
+        control_plane_url:
+          process.env.CONTROL_PLANE_URL ||
+          `http://127.0.0.1:${process.env.PORT || 4000}`,
+        auth_token: authToken,
+      }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw Object.assign(
+        new Error(`LangGraph orchestrator failed: ${res.status} ${text}`),
+        { status: 502 }
+      );
+    }
+    const body = await res.json();
+    const result = body.data || body;
+    const steps = result.steps || [];
+    const completedAt = new Date().toISOString();
+    db.prepare(
+      `UPDATE cluster_runs
+       SET status = ?, steps_json = ?, recon_run_id = ?, report_json = ?,
+           completed_at = ?, definition_id = COALESCE(?, definition_id),
+           error_message = ?
+       WHERE id = ?`
+    ).run(
+      result.status === "failed" ? "failed" : "completed",
+      JSON.stringify(steps),
+      result.recon_run_id || null,
+      result.report ? JSON.stringify(result.report) : null,
+      completedAt,
+      result.definition_id || null,
+      result.error || null,
+      clusterId
+    );
+
+    writeAudit({
+      orgId,
+      actorId: userId,
+      action: AUDIT_ACTIONS.CLUSTER_COMPLETED,
+      resourceType: "cluster_run",
+      resourceId: clusterId,
+      payload: {
+        agent_id: agentId,
+        engine: "langgraph",
+        recon_run_id: result.recon_run_id,
+        steps: steps.map((s) => s.step),
+      },
+    });
+
+    recordUsage({
+      orgId,
+      actorId: userId,
+      action: "cluster.run",
+      resourceType: "cluster_run",
+      resourceId: clusterId,
+    });
+
+    return { ...getClusterRun(orgId, clusterId), engine: "langgraph" };
+  } catch (error) {
+    db.prepare(
+      `UPDATE cluster_runs
+       SET status = 'failed', error_message = ?, completed_at = ?
+       WHERE id = ?`
+    ).run(String(error.message), new Date().toISOString(), clusterId);
+    throw error;
+  }
+}
+
+async function runLocalGraph({
   orgId,
   userId,
   definitionId = null,
@@ -62,33 +204,36 @@ export function runJumpstartCluster({
     action: AUDIT_ACTIONS.CLUSTER_STARTED,
     resourceType: "cluster_run",
     resourceId: clusterId,
-    payload: { agent_id: agentId, definition_id: definition.id },
+    payload: {
+      agent_id: agentId,
+      definition_id: definition.id,
+      engine: "node-fallback",
+    },
     sourceCitations: [`reconciliation_definitions:${definition.id}`],
   });
 
   try {
-    // 0) Connector freshness (optional stub sync for CRM/ERP)
     if (syncConnectors) {
       const catalog = listConnectors(orgId);
       const needed =
         definition.match_kind === "cc_auth_settle_cash"
           ? ["processor.auth.read", "processor.settle.read", "bank.deposit.read"]
-          : ["salesforce.billing.read", "netsuite.gl.read"];
+          : ["snowflake.invoices.read", "snowflake.gl_revenue.read"];
 
       for (const code of needed) {
         if (!catalog.find((c) => c.code === code)) continue;
-        const sync = syncConnector({ orgId, userId, connectorCode: code });
+        const sync = await syncConnector({ orgId, userId, connectorCode: code });
         steps.push({
           step: "connector_sync",
           connector_code: code,
           status: sync.status,
+          mode: sync.mode,
           sync_id: sync.id,
           rows_staged: sync.rows_staged,
         });
       }
     }
 
-    // 1) Detect
     const recon = runReconciliation({
       definitionId: definition.id,
       orgId,
@@ -102,36 +247,31 @@ export function runJumpstartCluster({
       exception_count: recon.exception_count,
     });
 
-    // 2) Investigate — summarize open breaks (no auto-resolve)
-    const openBreaks = db
-      .prepare(
-        `SELECT id, reference, exception_type, variance, status
-         FROM exceptions
-         WHERE org_id = ? AND run_id = ?
-           AND status IN ('open', 'assigned', 'pending_approval')
-         ORDER BY ABS(COALESCE(variance, 0)) DESC
-         LIMIT 25`
-      )
-      .all(orgId, recon.id);
+    const investigation = investigateRun({ orgId, runId: recon.id });
     steps.push({
       step: CLUSTER_STEPS[1],
       status: "completed",
-      open_count: openBreaks.length,
-      top_references: openBreaks.slice(0, 5).map((x) => x.reference),
-      hitl: "Human investigates exceptions in the control plane before resolve",
+      open_count: investigation.investigated_count,
+      retrieval_mode: investigation.summary.mode,
+      packs_with_hits: investigation.summary.with_hits,
+      top_references: investigation.packs
+        .slice(0, 5)
+        .map((p) => p.reference),
+      sample_citations: investigation.packs
+        .flatMap((p) => p.retrieval.citations)
+        .slice(0, 8),
+      hitl: "Human investigates RAG packs in control plane before resolve",
     });
 
-    // 3) Resolve — checkpoint only (human-on-the-loop)
     steps.push({
       step: CLUSTER_STEPS[2],
       status: "awaiting_human",
       hitl: true,
       message:
         "Material waive/correct requires controller dual-control in Exceptions UI",
-      open_exception_ids: openBreaks.map((x) => x.id),
+      open_exception_ids: investigation.packs.map((p) => p.exception_id),
     });
 
-    // 4) Report — Jumpstart diagnostic pack
     const report = buildJumpstartReport({
       orgId,
       userId,
@@ -158,6 +298,7 @@ export function runJumpstartCluster({
         evidence_id: report.evidence_id,
         scorecard: report.scorecard,
         variance_memo: report.variance_memo,
+        investigation_summary: investigation.summary,
       }),
       completedAt,
       clusterId
@@ -172,6 +313,7 @@ export function runJumpstartCluster({
       payload: {
         agent_id: agentId,
         recon_run_id: recon.id,
+        engine: "node-fallback",
         steps: steps.map((s) => s.step),
       },
       sourceCitations: [
@@ -189,7 +331,7 @@ export function runJumpstartCluster({
       resourceId: clusterId,
     });
 
-    return getClusterRun(orgId, clusterId);
+    return { ...getClusterRun(orgId, clusterId), engine: "node-fallback" };
   } catch (error) {
     db.prepare(
       `UPDATE cluster_runs

@@ -3,12 +3,38 @@ import { getDb } from "../db/connection.js";
 import { id } from "../lib/ids.js";
 import { writeAudit } from "../lib/audit.js";
 import { recordUsage } from "../lib/usage.js";
+import {
+  snowflakeConfigured,
+  snowflakeMode,
+  syncSnowflakeGl,
+  syncSnowflakeInvoices,
+} from "../connectors/snowflake.js";
 
 /**
  * MCP / REST connector catalog for client systems of record.
- * Live mode is feature-flagged; stub mode reports freshness from staging.
+ * Primary live path: Snowflake certified warehouse (client tenancy).
  */
 export const CONNECTOR_CATALOG = [
+  {
+    code: "snowflake.invoices.read",
+    name: "Snowflake certified CRM invoices",
+    kind: "crm",
+    protocol: "mcp",
+    mcp_uri: "mcp://open-finance/snowflake.invoices.read@1",
+    staging_table: "crm_invoices",
+    source_system_code: "SNOWFLAKE",
+    live_capable: true,
+  },
+  {
+    code: "snowflake.gl_revenue.read",
+    name: "Snowflake certified GL revenue",
+    kind: "erp",
+    protocol: "mcp",
+    mcp_uri: "mcp://open-finance/snowflake.gl_revenue.read@1",
+    staging_table: "gl_revenue_lines",
+    source_system_code: "SNOWFLAKE",
+    live_capable: true,
+  },
   {
     code: "salesforce.billing.read",
     name: "Salesforce Billing (CRM invoices)",
@@ -17,6 +43,7 @@ export const CONNECTOR_CATALOG = [
     mcp_uri: "mcp://open-finance/salesforce.billing.read@1",
     staging_table: "crm_invoices",
     source_system_code: "SFDC",
+    live_capable: false,
   },
   {
     code: "netsuite.gl.read",
@@ -26,6 +53,7 @@ export const CONNECTOR_CATALOG = [
     mcp_uri: "mcp://open-finance/netsuite.gl.read@1",
     staging_table: "gl_revenue_lines",
     source_system_code: "NS",
+    live_capable: false,
   },
   {
     code: "processor.auth.read",
@@ -35,6 +63,7 @@ export const CONNECTOR_CATALOG = [
     mcp_uri: null,
     staging_table: "cc_auths",
     source_system_code: "ADYEN",
+    live_capable: false,
   },
   {
     code: "processor.settle.read",
@@ -44,6 +73,7 @@ export const CONNECTOR_CATALOG = [
     mcp_uri: null,
     staging_table: "cc_settlements",
     source_system_code: "ADYEN",
+    live_capable: false,
   },
   {
     code: "bank.deposit.read",
@@ -53,26 +83,30 @@ export const CONNECTOR_CATALOG = [
     mcp_uri: null,
     staging_table: "cc_receipts",
     source_system_code: "BANK",
+    live_capable: false,
   },
 ];
 
 const STAGING_COUNT_SQL = {
-  crm_invoices: "SELECT COUNT(*) AS n, MAX(ingested_at) AS freshness FROM crm_invoices WHERE org_id = ?",
+  crm_invoices:
+    "SELECT COUNT(*) AS n, MAX(ingested_at) AS freshness FROM crm_invoices WHERE org_id = ?",
   gl_revenue_lines:
     "SELECT COUNT(*) AS n, MAX(ingested_at) AS freshness FROM gl_revenue_lines WHERE org_id = ?",
-  cc_auths: "SELECT COUNT(*) AS n, MAX(ingested_at) AS freshness FROM cc_auths WHERE org_id = ?",
+  cc_auths:
+    "SELECT COUNT(*) AS n, MAX(ingested_at) AS freshness FROM cc_auths WHERE org_id = ?",
   cc_settlements:
     "SELECT COUNT(*) AS n, MAX(ingested_at) AS freshness FROM cc_settlements WHERE org_id = ?",
   cc_receipts:
     "SELECT COUNT(*) AS n, MAX(ingested_at) AS freshness FROM cc_receipts WHERE org_id = ?",
 };
 
-function liveEnabled() {
+function liveFlag() {
   return process.env.CONNECTOR_LIVE === "1" || process.env.CONNECTOR_LIVE === "true";
 }
 
 export function listConnectors(orgId) {
   const db = getDb();
+  const sfk = snowflakeConfigured();
   return CONNECTOR_CATALOG.map((c) => {
     const sql = STAGING_COUNT_SQL[c.staging_table];
     const stats = sql ? db.prepare(sql).get(orgId) : { n: 0, freshness: null };
@@ -86,7 +120,15 @@ export function listConnectors(orgId) {
 
     return {
       ...c,
-      live_enabled: liveEnabled(),
+      live_enabled: liveFlag(),
+      snowflake: c.code.startsWith("snowflake.")
+        ? {
+            mode: sfk.mode,
+            account: sfk.account,
+            database: sfk.database,
+            has_credentials: sfk.has_credentials,
+          }
+        : undefined,
       staging_rows: stats?.n ?? 0,
       staging_freshness_at: stats?.freshness ?? null,
       last_sync: lastSync
@@ -105,10 +147,9 @@ export function listConnectors(orgId) {
 
 /**
  * Sync connector into certified staging.
- * Stub mode: no extract — counts existing staging and records evidence.
- * Live mode reserved for client tenancy (returns 501 until wired).
+ * Snowflake sandbox/live pulls warehouse rows into client DB only.
  */
-export function syncConnector({ orgId, userId, connectorCode }) {
+export async function syncConnector({ orgId, userId, connectorCode }) {
   const connector = CONNECTOR_CATALOG.find((c) => c.code === connectorCode);
   if (!connector) {
     const err = new Error(`Unknown connector: ${connectorCode}`);
@@ -116,18 +157,20 @@ export function syncConnector({ orgId, userId, connectorCode }) {
     throw err;
   }
 
-  if (liveEnabled()) {
+  const db = getDb();
+  const syncId = id("csync");
+  const startedAt = new Date().toISOString();
+
+  let mode = "stub";
+  if (connectorCode.startsWith("snowflake.") && liveFlag()) {
+    mode = snowflakeMode();
+  } else if (liveFlag() && connector.live_capable === false) {
     const err = new Error(
-      "Live connector mode is reserved for client-tenancy MCP wiring; unset CONNECTOR_LIVE for stub sync"
+      `Live mode not wired for ${connectorCode}; use Snowflake certified connectors`
     );
     err.status = 501;
     throw err;
   }
-
-  const db = getDb();
-  const syncId = id("csync");
-  const startedAt = new Date().toISOString();
-  const mode = "stub";
 
   db.prepare(
     `INSERT INTO connector_syncs
@@ -136,14 +179,50 @@ export function syncConnector({ orgId, userId, connectorCode }) {
   ).run(syncId, orgId, connectorCode, mode, userId, startedAt);
 
   try {
-    const sql = STAGING_COUNT_SQL[connector.staging_table];
-    const stats = sql
-      ? db.prepare(sql).get(orgId)
-      : { n: 0, freshness: null };
-    const rows = stats?.n ?? 0;
-    const freshness = stats?.freshness || startedAt;
-    const completedAt = new Date().toISOString();
+    let rowsRead = 0;
+    let rowsStaged = 0;
+    let freshness = startedAt;
+    let citations = [
+      `connector:${connectorCode}`,
+      `staging:${connector.staging_table}`,
+    ];
 
+    if (connectorCode === "snowflake.invoices.read" && mode !== "stub") {
+      const result = await syncSnowflakeInvoices({ orgId });
+      rowsRead = result.rows_read;
+      rowsStaged = result.rows_staged;
+      freshness = result.freshness_at;
+      citations = [
+        ...citations,
+        `system_of_record:${result.system_of_record}`,
+        `mode:${result.mode}`,
+        ...result.source_citations,
+      ];
+    } else if (connectorCode === "snowflake.gl_revenue.read" && mode !== "stub") {
+      const result = await syncSnowflakeGl({ orgId });
+      rowsRead = result.rows_read;
+      rowsStaged = result.rows_staged;
+      freshness = result.freshness_at;
+      citations = [
+        ...citations,
+        `system_of_record:${result.system_of_record}`,
+        `mode:${result.mode}`,
+        ...result.source_citations,
+      ];
+    } else {
+      const sql = STAGING_COUNT_SQL[connector.staging_table];
+      const stats = sql
+        ? db.prepare(sql).get(orgId)
+        : { n: 0, freshness: null };
+      rowsRead = stats?.n ?? 0;
+      rowsStaged = rowsRead;
+      freshness = stats?.freshness || startedAt;
+      if (connector.source_system_code) {
+        citations.push(`source_system:${connector.source_system_code}`);
+      }
+    }
+
+    const completedAt = new Date().toISOString();
     const { evidenceId } = writeAudit({
       orgId,
       actorId: userId,
@@ -153,18 +232,12 @@ export function syncConnector({ orgId, userId, connectorCode }) {
       payload: {
         connector_code: connectorCode,
         mode,
-        rows_read: rows,
-        rows_staged: rows,
+        rows_read: rowsRead,
+        rows_staged: rowsStaged,
         staging_table: connector.staging_table,
         mcp_uri: connector.mcp_uri,
       },
-      sourceCitations: [
-        `connector:${connectorCode}`,
-        `staging:${connector.staging_table}`,
-        connector.source_system_code
-          ? `source_system:${connector.source_system_code}`
-          : null,
-      ].filter(Boolean),
+      sourceCitations: citations.filter(Boolean).slice(0, 40),
     });
 
     db.prepare(
@@ -172,7 +245,7 @@ export function syncConnector({ orgId, userId, connectorCode }) {
        SET status = 'completed', rows_read = ?, rows_staged = ?,
            freshness_at = ?, evidence_id = ?, completed_at = ?
        WHERE id = ?`
-    ).run(rows, rows, freshness, evidenceId, completedAt, syncId);
+    ).run(rowsRead, rowsStaged, freshness, evidenceId, completedAt, syncId);
 
     recordUsage({
       orgId,

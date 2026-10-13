@@ -19,8 +19,8 @@ pricing:
     report.generate: 4
     cluster.run: 15
 tools:
-  - mcp://open-finance/salesforce.billing.read@1
-  - mcp://open-finance/netsuite.gl.read@1
+  - mcp://open-finance/snowflake.invoices.read@1
+  - mcp://open-finance/snowflake.gl_revenue.read@1
 policies:
   - sox.lineage.required
   - dual_control.above_materiality

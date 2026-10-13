@@ -51,7 +51,7 @@ External adapters
 | Database | SQLite file | Postgres + connection pool |
 | API | Single Node process | Horizontal replicas behind LB |
 | Matching | In-process sync job | Worker queue (BullMQ / Temporal) |
-| Auth | Local JWT + bcrypt | OIDC (Okta/Entra) |
+| Auth | Local JWT + bcrypt | **Okta or Clerk** OIDC (JWKS); `AUTH_MODE` |
 | Files / reports | JSON API | Object storage + PDF packs |
 | Multi-tenant | Single org | `org_id` already on core tables |
 

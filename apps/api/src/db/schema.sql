@@ -17,8 +17,12 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   role          TEXT NOT NULL CHECK (role IN ('admin', 'controller', 'accountant')),
   entity_ids    TEXT NOT NULL DEFAULT '[]', -- JSON array of entity ids (accountant scope)
+  auth_provider TEXT NOT NULL DEFAULT 'local', -- local | okta | clerk
+  external_id   TEXT, -- IdP subject (sub)
   created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE INDEX IF NOT EXISTS idx_users_external ON users(auth_provider, external_id);
 
 CREATE TABLE IF NOT EXISTS entities (
   id            TEXT PRIMARY KEY,

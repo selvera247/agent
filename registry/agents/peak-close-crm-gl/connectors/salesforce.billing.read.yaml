@@ -1,6 +1,0 @@
-code: salesforce.billing.read
-protocol: mcp
-mcp_uri: mcp://open-finance/salesforce.billing.read@1
-staging_table: crm_invoices
-source_system_code: SFDC
-mode_default: stub

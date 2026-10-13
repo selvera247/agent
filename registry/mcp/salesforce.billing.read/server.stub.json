@@ -16,5 +16,7 @@
     }
   ],
   "staging_table": "crm_invoices",
-  "status": "stub"
+  "status": "stub",
+  "modes": ["stub"],
+  "note": "Jumpstart live SoR path is Snowflake certified warehouse — see snowflake.certified.read"
 }

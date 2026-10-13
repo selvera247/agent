@@ -19,6 +19,7 @@ import evidenceRoutes from "./routes/evidence.js";
 import connectorRoutes from "./routes/connectors.js";
 import clusterRoutes from "./routes/cluster.js";
 import registryRoutes from "./routes/registry.js";
+import investigateRoutes from "./routes/investigate.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 4000);
@@ -60,6 +61,7 @@ app.use("/api/v1/evidence", evidenceRoutes);
 app.use("/api/v1/connectors", connectorRoutes);
 app.use("/api/v1/cluster", clusterRoutes);
 app.use("/api/v1/registry", registryRoutes);
+app.use("/api/v1/investigate", investigateRoutes);
 
 // Production: serve built web client from the same host
 const webDist = path.join(__dirname, "../../web/dist");

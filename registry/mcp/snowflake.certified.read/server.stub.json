@@ -1,0 +1,23 @@
+{
+  "name": "snowflake.certified.read",
+  "version": "1",
+  "protocol": "mcp",
+  "tools": [
+    {
+      "name": "warehouse.invoices.list",
+      "description": "Read certified CRM invoices from Snowflake into staging (client tenancy)"
+    },
+    {
+      "name": "warehouse.gl_revenue.list",
+      "description": "Read certified GL revenue lines from Snowflake into staging (client tenancy)"
+    }
+  ],
+  "staging_tables": ["crm_invoices", "gl_revenue_lines"],
+  "status": "live_capable",
+  "modes": ["stub", "sandbox", "live"],
+  "fixtures": [
+    "fixtures/invoices.live.json",
+    "fixtures/gl_revenue.live.json"
+  ],
+  "implementation": "apps/api/src/connectors/snowflake.js"
+}

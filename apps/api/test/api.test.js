@@ -80,6 +80,58 @@ test("login and dashboard", async () => {
   assert.ok("open_exceptions" in body);
 });
 
+test("auth config exposes mode for Okta/Clerk/local", async () => {
+  const res = await fetch(`${BASE}/auth/config`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.ok(["local", "okta", "clerk"].includes(body.data.mode));
+  assert.equal(typeof body.data.allow_local, "boolean");
+});
+
+test("SoD blocks proposer from approving own correction", async () => {
+  const { token } = await login();
+  const defs = await fetch(`${BASE}/reconciliations`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => r.json());
+  await fetch(`${BASE}/reconciliations/${defs.data[0].id}/runs`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const ex = await fetch(`${BASE}/exceptions?status=open`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => r.json());
+  assert.ok(ex.data.length > 0);
+  const target = ex.data.find((e) => Math.abs(e.variance || 0) >= 10000) || ex.data[0];
+
+  const proposed = await fetch(`${BASE}/exceptions/${target.id}/corrections`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      correction_type: "adjustment",
+      amount: 15000,
+      note: "material SoD test",
+    }),
+  });
+  assert.equal(proposed.status, 201);
+  const corr = await proposed.json();
+
+  const decide = await fetch(
+    `${BASE}/exceptions/corrections/${corr.data.id}/decide`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ decision: "approved" }),
+    }
+  );
+  assert.equal(decide.status, 403);
+});
+
 test("run reconciliation creates exceptions", async () => {
   const { token } = await login();
   const defs = await fetch(`${BASE}/reconciliations`, {
@@ -293,4 +345,41 @@ test("cluster run sequences connectors detect investigate report", async () => {
   assert.ok(steps.includes("report"));
   const resolve = body.data.steps.find((s) => s.step === "resolve");
   assert.equal(resolve.status, "awaiting_human");
+  const investigate = body.data.steps.find((s) => s.step === "investigate");
+  assert.equal(investigate.retrieval_mode, "hybrid_structured_bm25");
+  assert.ok(investigate.packs_with_hits >= 1);
+});
+
+test("snowflake stub sync succeeds without CONNECTOR_LIVE", async () => {
+  const { token } = await login();
+  const syncRes = await fetch(
+    `${BASE}/connectors/snowflake.invoices.read/sync`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  assert.equal(syncRes.status, 201);
+  const sync = await syncRes.json();
+  assert.equal(sync.data.mode, "stub");
+});
+
+test("hybrid investigate retrieve returns staging citations", async () => {
+  const { token } = await login();
+  const res = await fetch(`${BASE}/investigate/retrieve`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      reference: "INV-1002",
+      query: "amount mismatch revenue",
+    }),
+  });
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.data.mode, "hybrid_structured_bm25");
+  assert.ok(body.data.hit_count >= 1);
+  assert.ok(body.data.citations.some((c) => c.includes("INV-1002")));
 });

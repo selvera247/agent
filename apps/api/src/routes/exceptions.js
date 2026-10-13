@@ -281,6 +281,12 @@ router.post(
     if (correction.status !== "proposed") {
       return res.status(409).json({ error: "Already decided" });
     }
+    // SoD: proposer cannot approve/reject their own material correction
+    if (correction.proposed_by === req.user.id) {
+      return res.status(403).json({
+        error: "Separation of duties: proposer cannot decide their own correction",
+      });
+    }
 
     getDb()
       .prepare(

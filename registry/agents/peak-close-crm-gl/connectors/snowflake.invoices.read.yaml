@@ -1,0 +1,7 @@
+code: snowflake.invoices.read
+protocol: mcp
+mcp_uri: mcp://open-finance/snowflake.invoices.read@1
+staging_table: crm_invoices
+source_system_code: SNOWFLAKE
+mode_default: sandbox
+system_of_record: Snowflake

@@ -71,10 +71,18 @@ export default function ConnectorsPage() {
                     <strong>{c.name}</strong>
                     <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>
                       {c.code}
+                      {c.snowflake?.mode
+                        ? ` · Snowflake ${c.snowflake.mode}`
+                        : ""}
                     </div>
                   </td>
                   <td>
                     <span className="badge">{c.protocol}</span>
+                    {c.live_capable ? (
+                      <span className="badge" style={{ marginLeft: 6 }}>
+                        live-capable
+                      </span>
+                    ) : null}
                   </td>
                   <td>{c.staging_table}</td>
                   <td>{c.staging_rows}</td>

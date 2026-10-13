@@ -1,7 +1,7 @@
 # Acceptance checklist — CRM↔GL Jumpstart
 
 - [ ] SIPOC signed by finance + IT
-- [ ] Staging or MCP reads reconcile to Salesforce / NetSuite spot checks
+- [ ] Staging or Snowflake reads reconcile to warehouse / SoR spot checks
 - [ ] Cluster or recon run produces exceptions on recent data
 - [ ] Jumpstart report (scorecard + variance memo) reviewed by controller
 - [ ] Evidence hashes present for run + report
