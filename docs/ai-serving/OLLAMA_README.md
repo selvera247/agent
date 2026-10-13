@@ -84,6 +84,16 @@ python scripts/run_local_eval.py --adapter-dir models/collections-lora
 
 Until a local PEFT server is wired, the runner documents adapter absence and uses the heuristic fallback for CI.
 
+### No NVIDIA GPU on your PC?
+
+Use **Google Colab** (cloud NVIDIA) instead:
+
+- Guide: [`docs/ai-serving/COLAB_README.md`](COLAB_README.md)
+- Notebook: [`notebooks/collections_lora_colab.ipynb`](../../notebooks/collections_lora_colab.ipynb)
+- Local prep (Windows, no bash): `python scripts/prepare_lora_train.py`
+
+Authoritative Week 2 metrics come from the Colab holdout eval (`colab_holdout_metrics.json`).
+
 ## Privacy checklist
 
 - [ ] Inputs are pseudonymized (`*_PSEUD`, `INV_P_*`)
