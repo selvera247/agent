@@ -55,6 +55,16 @@ function migrate(database) {
 
   // Jumpstart scale tables are CREATE IF NOT EXISTS in schema.sql;
   // re-exec is safe. No column backfills required beyond match_kind/source.
+
+  const userCols = tableColumns(database, "users");
+  if (!userCols.includes("auth_provider")) {
+    database.exec(
+      `ALTER TABLE users ADD COLUMN auth_provider TEXT NOT NULL DEFAULT 'local'`
+    );
+  }
+  if (!userCols.includes("external_id")) {
+    database.exec(`ALTER TABLE users ADD COLUMN external_id TEXT`);
+  }
 }
 
 export function getDb() {

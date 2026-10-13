@@ -9,7 +9,7 @@ Forward-deployed shape: configure connectors, agent logic, packaging, and audit 
 | Cloud | Azure, AWS, or GCP project owned by the client |
 | LLM | Client enterprise tenancy or VPC Ollama/vLLM (`allow_external_apis: false`) |
 | Data | Connectors into SoR; certified staging in client DB/warehouse — no large extracts off-tenant |
-| Identity | Swap local JWT for Okta/Entra OIDC when promoting beyond Jumpstart demo |
+| Identity | Prefer **Okta or Clerk** (`AUTH_MODE=okta|clerk`); see `docs/AUTH.md` |
 
 ## Packaging & promotion
 

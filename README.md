@@ -147,7 +147,9 @@ npm run dev:api          # :4000
 npm run dev:web          # :5173 (proxies /api → API)
 ```
 
-Demo logins (password `password123`):
+**Auth:** preferred IdPs are **Okta** or **Clerk** (`AUTH_MODE`); local demo login remains the Jumpstart default. See [docs/AUTH.md](docs/AUTH.md).
+
+Demo logins when `AUTH_MODE=local` (password `password123`):
 
 - `controller@findatagraph.demo`
 - `accountant@findatagraph.demo` (US-EAST + US-WEST only)

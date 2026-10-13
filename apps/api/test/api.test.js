@@ -80,6 +80,58 @@ test("login and dashboard", async () => {
   assert.ok("open_exceptions" in body);
 });
 
+test("auth config exposes mode for Okta/Clerk/local", async () => {
+  const res = await fetch(`${BASE}/auth/config`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.ok(["local", "okta", "clerk"].includes(body.data.mode));
+  assert.equal(typeof body.data.allow_local, "boolean");
+});
+
+test("SoD blocks proposer from approving own correction", async () => {
+  const { token } = await login();
+  const defs = await fetch(`${BASE}/reconciliations`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => r.json());
+  await fetch(`${BASE}/reconciliations/${defs.data[0].id}/runs`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const ex = await fetch(`${BASE}/exceptions?status=open`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => r.json());
+  assert.ok(ex.data.length > 0);
+  const target = ex.data.find((e) => Math.abs(e.variance || 0) >= 10000) || ex.data[0];
+
+  const proposed = await fetch(`${BASE}/exceptions/${target.id}/corrections`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      correction_type: "adjustment",
+      amount: 15000,
+      note: "material SoD test",
+    }),
+  });
+  assert.equal(proposed.status, 201);
+  const corr = await proposed.json();
+
+  const decide = await fetch(
+    `${BASE}/exceptions/corrections/${corr.data.id}/decide`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ decision: "approved" }),
+    }
+  );
+  assert.equal(decide.status, 403);
+});
+
 test("run reconciliation creates exceptions", async () => {
   const { token } = await login();
   const defs = await fetch(`${BASE}/reconciliations`, {
