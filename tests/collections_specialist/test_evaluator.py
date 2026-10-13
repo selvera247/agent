@@ -155,6 +155,226 @@ class EvaluatorTests(unittest.TestCase):
         score = score_example(ex, pred)
         self.assertTrue(score["action_match"])
 
+    def test_snake_case_dispute_synonym(self):
+        ex = base_example()
+        pred = {
+            "action": "assign_dispute_specialist",
+            "reason": "Dispute on INV_P_9 with risk 82.",
+            "confidence": 0.8,
+            "evidence": [
+                "risk_score>=80",
+                "INV_P_9.dispute_flag==true",
+                "open_ar>100000",
+            ],
+        }
+        score = score_example(ex, pred)
+        self.assertTrue(score["action_match"])
+        self.assertTrue(score["overall_pass"])
+
+    def test_null_ptp_evidence_grounded(self):
+        ex = base_example(
+            customer={
+                "id": "cust_t",
+                "name": "TEST_PSEUD",
+                "risk_score": 28,
+                "health": "healthy",
+                "strategic_account": False,
+                "last_contact_at": None,
+            },
+            invoices=[
+                {
+                    "invoice_number": "INV_P_16001",
+                    "days_past_due": 8,
+                    "open_balance": 450.0,
+                    "dispute_flag": False,
+                    "promise_to_pay_date": None,
+                }
+            ],
+            policy_flags=["low_dollar_quick_win"],
+            expected_action="Send automated reminder",
+            expected_evidence=["open_ar<5000", "risk_score<30"],
+            collector_context={
+                "assigned_collector": "col_auto",
+                "availability": "available",
+                "skill": "automation",
+            },
+        )
+        pred = {
+            "action": "Send automated reminder",
+            "reason": "Low AR and risk with no promise to pay.",
+            "confidence": 0.75,
+            "evidence": ["open_ar<5000", "risk_score<30", "promise_to_pay_date==null"],
+        }
+        score = score_example(ex, pred)
+        self.assertFalse(score["hallucinated"], score["groundedness_notes"])
+        self.assertTrue(score["grounded"])
+
+    def test_mid_range_threshold_9999_allowed(self):
+        ex = base_example(
+            expected_action="Email payment reminder",
+            expected_evidence=["open_ar>=5000", "open_ar<10000"],
+            customer={
+                "id": "cust_t",
+                "name": "TEST_PSEUD",
+                "risk_score": 46,
+                "health": "watch",
+                "strategic_account": False,
+                "last_contact_at": None,
+            },
+            invoices=[
+                {
+                    "invoice_number": "INV_P_23001",
+                    "days_past_due": 30,
+                    "open_balance": 8800,
+                    "dispute_flag": False,
+                    "promise_to_pay_date": None,
+                }
+            ],
+            policy_flags=["no_split_customer"],
+            collector_context={
+                "assigned_collector": "col_lee",
+                "availability": "available",
+                "skill": "standard",
+            },
+        )
+        pred = {
+            "action": "Email payment reminder",
+            "reason": "Mid-dollar AR between 5000 and 9999.",
+            "confidence": 0.7,
+            "evidence": ["open_ar>=5000", "open_ar<10000"],
+        }
+        score = score_example(ex, pred)
+        self.assertFalse(score["hallucinated"], score["groundedness_notes"])
+
+    def test_threshold_in_reason_not_hallucination(self):
+        ex = base_example(
+            customer={
+                "id": "cust_t",
+                "name": "TEST_PSEUD",
+                "risk_score": 28,
+                "health": "healthy",
+                "strategic_account": False,
+                "last_contact_at": None,
+            },
+            invoices=[
+                {
+                    "invoice_number": "INV_P_16001",
+                    "days_past_due": 8,
+                    "open_balance": 450.0,
+                    "dispute_flag": False,
+                    "promise_to_pay_date": None,
+                }
+            ],
+            policy_flags=["low_dollar_quick_win"],
+            expected_action="Send automated reminder",
+            expected_evidence=["open_ar<5000", "risk_score<30"],
+            collector_context={
+                "assigned_collector": "col_auto",
+                "availability": "available",
+                "skill": "automation",
+            },
+        )
+        pred = {
+            "action": "Send automated reminder",
+            "reason": "Open AR is under 5000 and risk is 28.",
+            "confidence": 0.75,
+            "evidence": ["open_ar<5000", "risk_score<30"],
+        }
+        score = score_example(ex, pred)
+        self.assertFalse(score["hallucinated"], score["groundedness_notes"])
+        self.assertTrue(score["overall_pass"])
+
+    def test_policy_flags_includes_evidence_grounded(self):
+        ex = base_example()
+        pred = {
+            "action": "Route to dispute specialist",
+            "reason": "Dispute specialist required by policy.",
+            "confidence": 0.85,
+            "evidence": [
+                "policy_flags.includes(dispute_specialist_required)",
+                "INV_P_9.dispute_flag==true",
+            ],
+        }
+        score = score_example(ex, pred)
+        self.assertFalse(score["hallucinated"], score["groundedness_notes"])
+        self.assertTrue(score["grounded"])
+
+    def test_soft_evidence_coverage_field_values(self):
+        ex = base_example(
+            customer={
+                "id": "cust_t",
+                "name": "TEST_PSEUD",
+                "risk_score": 28,
+                "health": "healthy",
+                "strategic_account": False,
+                "last_contact_at": None,
+            },
+            invoices=[
+                {
+                    "invoice_number": "INV_P_16001",
+                    "days_past_due": 8,
+                    "open_balance": 450.0,
+                    "dispute_flag": False,
+                    "promise_to_pay_date": None,
+                }
+            ],
+            policy_flags=["low_dollar_quick_win"],
+            expected_action="Send automated reminder",
+            expected_evidence=["open_ar<5000", "risk_score<30"],
+            collector_context={
+                "assigned_collector": "col_auto",
+                "availability": "available",
+                "skill": "automation",
+            },
+        )
+        pred = {
+            "action": "Send automated reminder",
+            "reason": "Low risk 28 and open balance 450.",
+            "confidence": 0.75,
+            "evidence": ["risk_score: 28", "open_balance: 450.0"],
+        }
+        score = score_example(ex, pred)
+        self.assertGreater(score["evidence_coverage"], 0.0)
+        self.assertTrue(score["evidence_ok"])
+
+    def test_field_value_evidence_grounded(self):
+        ex = base_example(
+            customer={
+                "id": "cust_t",
+                "name": "TEST_PSEUD",
+                "risk_score": 28,
+                "health": "healthy",
+                "strategic_account": False,
+                "last_contact_at": None,
+            },
+            invoices=[
+                {
+                    "invoice_number": "INV_P_16001",
+                    "days_past_due": 8,
+                    "open_balance": 450.0,
+                    "dispute_flag": False,
+                    "promise_to_pay_date": None,
+                }
+            ],
+            policy_flags=["low_dollar_quick_win"],
+            expected_action="Send automated reminder",
+            expected_evidence=["open_ar<5000", "risk_score<30"],
+            collector_context={
+                "assigned_collector": "col_auto",
+                "availability": "available",
+                "skill": "automation",
+            },
+        )
+        pred = {
+            "action": "Send automated reminder",
+            "reason": "Low risk 28 and open balance 450 favor automation.",
+            "confidence": 0.75,
+            "evidence": ["risk_score: 28", "open_balance: $450.00", "days_past_due: 8"],
+        }
+        score = score_example(ex, pred)
+        self.assertFalse(score["hallucinated"])
+        self.assertTrue(score["grounded"])
+
     def test_aggregate_rates(self):
         ex = base_example()
         good = score_example(

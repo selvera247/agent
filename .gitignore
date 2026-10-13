@@ -20,6 +20,10 @@ data/collections_specialist/internal/
 *.gguf
 adapter_model.bin
 adapter_config.json
+
+# Orchestrator / Python
 .venv-orch/
 __pycache__/
+*.py[cod]
 *.pyc
+*.egg-info/
