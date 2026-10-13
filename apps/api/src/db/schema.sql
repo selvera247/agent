@@ -22,8 +22,6 @@ CREATE TABLE IF NOT EXISTS users (
   created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_users_external ON users(auth_provider, external_id);
-
 CREATE TABLE IF NOT EXISTS entities (
   id            TEXT PRIMARY KEY,
   org_id        TEXT NOT NULL REFERENCES organizations(id),
