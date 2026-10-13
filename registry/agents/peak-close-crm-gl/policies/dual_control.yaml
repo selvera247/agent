@@ -1,0 +1,8 @@
+id: dual_control.above_materiality
+threshold_abs: 10000
+currency: USD
+requires_roles:
+  - controller
+  - admin
+sod: proposer_cannot_approve
+hitl_default: true

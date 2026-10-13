@@ -9,6 +9,15 @@ API-first control plane for **detect → investigate → resolve → report**.
 1. **Seeded** — open Meridian Retail CRM invoices ↔ GL revenue (`CRM_GL_REV`)
 2. **User-entered** — describe a need (e.g. “reconcile CC auth, settlements, and what we received”) → generate agent package → implement → run
 
+**Week-1 Jumpstart → scale path** (see [docs/JUMPSTART.md](docs/JUMPSTART.md), [docs/SCALE_PATH.md](docs/SCALE_PATH.md)):
+
+1. Freeze kit — SIPOC + acceptance + diagnostic report (`/jumpstart`)
+2. Practice library packages under `registry/agents/`
+3. Connector stubs (`/connectors`) before orchestration
+4. Evidence / Trust Cloud (`/evidence`) elevated from audit
+5. Cluster run (`POST /api/v1/cluster/run`) detect → investigate → HITL resolve → report
+6. Client-cloud delivery notes in [docs/CLIENT_CLOUD_DELIVERY.md](docs/CLIENT_CLOUD_DELIVERY.md)
+
 The React app is one client; the HTTP API is the product.
 
 ## Architecture
@@ -45,7 +54,8 @@ findatagraph/
 │           ├── pages/
 │           └── styles/
 ├── packages/shared/         # roles, statuses, shared constants
-├── docs/ARCHITECTURE.md
+├── registry/                # Practice library (agent packages + MCP stubs)
+├── docs/                    # ARCHITECTURE, JUMPSTART, SCALE_PATH, delivery
 └── package.json             # npm workspaces
 ```
 
@@ -91,12 +101,19 @@ findatagraph/
 | POST | `/specs/generate` | NL / chip → agent package |
 | POST | `/specs/:id/implement` | Materialize definition (+ CC staging) |
 | GET | `/specs/usage` | Demo credit meter |
+| GET | `/reports/jumpstart` | Exception list + DQ scorecard + variance memo |
+| GET | `/evidence` | Trust Cloud evidence (hash, citations, policy) |
+| GET | `/connectors` | MCP/REST connector catalog + staging freshness |
+| POST | `/connectors/:code/sync` | Stub sync (live mode client-tenancy only) |
+| POST | `/cluster/run` | Jumpstart multi-step cluster envelope |
+| GET | `/cluster` | Cluster run history |
+| GET | `/registry/agents` | Practice library agent packages |
 
 ## UI architecture
 
 - **Auth gate** → JWT in `localStorage`, restored via `/auth/me`
 - **Shell** → sidebar nav + role display
-- **Pages:** Spec Studio · Dashboard · Exceptions list/detail · Runs · Audit
+- **Pages:** Spec Studio · Jumpstart · Dashboard · Exceptions · Runs · Connectors · Evidence · Audit
 - Default route after login: `/studio` (portfolio Launch demo uses `…/studio`)
 - **Data access:** thin `api()` client; no server state library in MVP (swap in React Query later)
 

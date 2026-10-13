@@ -46,6 +46,11 @@ export const AUDIT_ACTIONS = Object.freeze({
   CORRECTION_REJECTED: "correction_rejected",
   SPEC_GENERATED: "spec_generated",
   SPEC_IMPLEMENTED: "spec_implemented",
+  REPORT_GENERATED: "report_generated",
+  CONNECTOR_SYNCED: "connector_synced",
+  CLUSTER_STARTED: "cluster_started",
+  CLUSTER_COMPLETED: "cluster_completed",
+  EVIDENCE_RECORDED: "evidence_recorded",
 });
 
 export const MATCH_KINDS = Object.freeze({
@@ -63,4 +68,21 @@ export const ACTION_CREDITS = Object.freeze({
   "correction.approve": 5,
   "specs.generate": 2,
   "specs.implement": 8,
+  "report.generate": 4,
+  "connector.sync": 2,
+  "cluster.run": 15,
 });
+
+/** Week-1 Jumpstart agent ids published under registry/agents */
+export const JUMPSTART_AGENTS = Object.freeze({
+  CRM_GL: "peak.close.crm-gl-revenue",
+  COLLECTIONS: "peak.collections.recommendation",
+});
+
+/** Ordered cluster workflow steps (detect → … → report) */
+export const CLUSTER_STEPS = Object.freeze([
+  "detect",
+  "investigate",
+  "resolve",
+  "report",
+]);

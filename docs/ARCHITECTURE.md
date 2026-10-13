@@ -23,9 +23,10 @@ The web app is one client; the API is the product surface.
                                     │  → Postgres later│
                                     └──────────────────┘
 
-External (future adapters)
-  ERP / CRM / Billing ──ETL──► Certified staging tables
+External adapters
+  ERP / CRM / Billing ──MCP/REST stub──► Certified staging tables
   Identity (Okta/Entra) ──────► JWT / OIDC swap-in
+  Practice library (`registry/`) ──► Agent packages + connector contracts
 ```
 
 ## Bounded contexts
@@ -38,6 +39,10 @@ External (future adapters)
 | Exceptions | Lifecycle, assignment, resolution |
 | Approvals | Dual-control for material actions |
 | Audit | Append-only event log |
+| Evidence | Hashed Trust Cloud records + source citations |
+| Connectors | MCP/REST catalog + stub/live sync |
+| Jumpstart / Cluster | Diagnostic report + multi-step orchestration |
+| Registry | Practice-library agent packages |
 
 ## Scalability path
 

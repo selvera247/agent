@@ -1,0 +1,22 @@
+{
+  "entities": [
+    "Invoice",
+    "GlRevenueLine",
+    "Entity",
+    "Exception",
+    "Correction",
+    "Evidence",
+    "SourceSystem"
+  ],
+  "exception_types": [
+    "amount_mismatch",
+    "missing_in_gl",
+    "missing_in_crm",
+    "entity_mismatch"
+  ],
+  "relations": [
+    { "from": "Invoice", "to": "GlRevenueLine", "via": "invoice_number=reference" },
+    { "from": "Exception", "to": "Invoice", "via": "reference" },
+    { "from": "Evidence", "to": "Exception", "via": "resource_id" }
+  ]
+}

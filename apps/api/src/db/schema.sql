@@ -225,3 +225,61 @@ CREATE TABLE IF NOT EXISTS usage_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_usage_org_created ON usage_events(org_id, created_at DESC);
+
+-- Trust Cloud evidence (elevated from audit_log; hash + policy version for SOX)
+CREATE TABLE IF NOT EXISTS evidence (
+  id              TEXT PRIMARY KEY,
+  org_id          TEXT NOT NULL REFERENCES organizations(id),
+  audit_id        TEXT REFERENCES audit_log(id),
+  actor_id        TEXT REFERENCES users(id),
+  action          TEXT NOT NULL,
+  resource_type   TEXT NOT NULL,
+  resource_id     TEXT,
+  policy_version  TEXT NOT NULL DEFAULT 'v1',
+  content_hash    TEXT NOT NULL,
+  source_citations TEXT NOT NULL DEFAULT '[]', -- JSON array
+  payload         TEXT NOT NULL DEFAULT '{}',
+  created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_evidence_org_created ON evidence(org_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_evidence_resource ON evidence(resource_type, resource_id);
+
+-- Connector sync jobs (MCP / REST into client systems of record)
+CREATE TABLE IF NOT EXISTS connector_syncs (
+  id              TEXT PRIMARY KEY,
+  org_id          TEXT NOT NULL REFERENCES organizations(id),
+  connector_code  TEXT NOT NULL,
+  status          TEXT NOT NULL CHECK (status IN ('queued', 'running', 'completed', 'failed')),
+  mode            TEXT NOT NULL DEFAULT 'stub', -- stub | live
+  rows_read       INTEGER NOT NULL DEFAULT 0,
+  rows_staged     INTEGER NOT NULL DEFAULT 0,
+  freshness_at    TEXT,
+  error_message   TEXT,
+  evidence_id     TEXT REFERENCES evidence(id),
+  triggered_by    TEXT REFERENCES users(id),
+  started_at      TEXT,
+  completed_at    TEXT,
+  created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_connector_syncs_org ON connector_syncs(org_id, created_at DESC);
+
+-- Jumpstart / cluster run envelopes (multi-step orchestration)
+CREATE TABLE IF NOT EXISTS cluster_runs (
+  id              TEXT PRIMARY KEY,
+  org_id          TEXT NOT NULL REFERENCES organizations(id),
+  agent_id        TEXT NOT NULL,
+  definition_id   TEXT REFERENCES reconciliation_definitions(id),
+  status          TEXT NOT NULL CHECK (status IN ('queued', 'running', 'completed', 'failed')),
+  steps_json      TEXT NOT NULL DEFAULT '[]',
+  recon_run_id    TEXT REFERENCES reconciliation_runs(id),
+  report_json     TEXT,
+  triggered_by    TEXT REFERENCES users(id),
+  started_at      TEXT,
+  completed_at    TEXT,
+  error_message   TEXT,
+  created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_cluster_runs_org ON cluster_runs(org_id, created_at DESC);
