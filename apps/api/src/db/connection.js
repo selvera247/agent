@@ -52,6 +52,9 @@ function migrate(database) {
       PRAGMA foreign_keys = ON;
     `);
   }
+
+  // Jumpstart scale tables are CREATE IF NOT EXISTS in schema.sql;
+  // re-exec is safe. No column backfills required beyond match_kind/source.
 }
 
 export function getDb() {

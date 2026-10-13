@@ -1,0 +1,21 @@
+{
+  "entities": [
+    "Customer",
+    "OpenAR",
+    "InvoiceDispute",
+    "CollectionsAction",
+    "Evidence"
+  ],
+  "actions": [
+    "call",
+    "email",
+    "escalate",
+    "hold",
+    "write_off_review",
+    "no_action"
+  ],
+  "relations": [
+    { "from": "CollectionsAction", "to": "Customer", "via": "customer_id" },
+    { "from": "Evidence", "to": "OpenAR", "via": "predicate" }
+  ]
+}

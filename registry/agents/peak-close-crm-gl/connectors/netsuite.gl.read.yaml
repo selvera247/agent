@@ -1,0 +1,6 @@
+code: netsuite.gl.read
+protocol: mcp
+mcp_uri: mcp://open-finance/netsuite.gl.read@1
+staging_table: gl_revenue_lines
+source_system_code: NS
+mode_default: stub

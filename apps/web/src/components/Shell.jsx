@@ -3,9 +3,12 @@ import { useAuth } from "../api/auth";
 
 const links = [
   { to: "/studio", label: "Spec Studio", end: true },
+  { to: "/jumpstart", label: "Jumpstart" },
   { to: "/dashboard", label: "Dashboard" },
   { to: "/exceptions", label: "Exceptions" },
   { to: "/runs", label: "Runs" },
+  { to: "/connectors", label: "Connectors" },
+  { to: "/evidence", label: "Evidence" },
   { to: "/audit", label: "Audit" },
 ];
 

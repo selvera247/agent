@@ -1,0 +1,20 @@
+{
+  "name": "netsuite.gl.read",
+  "version": "1",
+  "protocol": "mcp",
+  "tools": [
+    {
+      "name": "erp.gl.revenue.list",
+      "description": "Read GL revenue lines into certified staging (client tenancy)",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "period": { "type": "string" },
+          "account_codes": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  ],
+  "staging_table": "gl_revenue_lines",
+  "status": "stub"
+}

@@ -186,3 +186,111 @@ test("spec studio CC auth path generates and runs", async () => {
   }).then((r) => r.json());
   assert.ok(usage.data.credits_used > 0);
 });
+
+test("evidence recorded when reconciliation runs", async () => {
+  const { token } = await login();
+  const defs = await fetch(`${BASE}/reconciliations`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => r.json());
+  const defId = defs.data[0].id;
+
+  await fetch(`${BASE}/reconciliations/${defId}/runs`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const ev = await fetch(`${BASE}/evidence`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => r.json());
+  assert.ok(ev.data.length > 0);
+  assert.ok(ev.data[0].content_hash);
+  assert.ok(ev.data[0].policy_version);
+});
+
+test("jumpstart report returns scorecard and variance memo", async () => {
+  const { token } = await login();
+  const defs = await fetch(`${BASE}/reconciliations`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => r.json());
+
+  await fetch(`${BASE}/reconciliations/${defs.data[0].id}/runs`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const reportRes = await fetch(`${BASE}/reports/jumpstart`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  assert.equal(reportRes.status, 200);
+  const report = await reportRes.json();
+  assert.equal(report.data.kind, "jumpstart_diagnostic");
+  assert.ok(report.data.scorecard);
+  assert.ok(typeof report.data.scorecard.match_rate === "number");
+  assert.ok(Array.isArray(report.data.exception_list));
+  assert.ok(report.data.variance_memo.includes("Variance memo"));
+  assert.ok(report.data.evidence_id);
+});
+
+test("connector stub sync and registry packages", async () => {
+  const { token } = await login();
+  const list = await fetch(`${BASE}/connectors`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => r.json());
+  assert.ok(list.data.length >= 2);
+  const sf = list.data.find((c) => c.code === "salesforce.billing.read");
+  assert.ok(sf);
+
+  const syncRes = await fetch(
+    `${BASE}/connectors/salesforce.billing.read/sync`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  assert.equal(syncRes.status, 201);
+  const sync = await syncRes.json();
+  assert.equal(sync.data.status, "completed");
+  assert.equal(sync.data.mode, "stub");
+  assert.ok(sync.data.rows_staged >= 0);
+
+  const agents = await fetch(`${BASE}/registry/agents`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => r.json());
+  assert.ok(agents.data.some((a) => a.id === "peak.close.crm-gl-revenue"));
+  assert.ok(
+    agents.data.some((a) => a.id === "peak.collections.recommendation")
+  );
+
+  const pack = await fetch(
+    `${BASE}/registry/agents/peak-close-crm-gl`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  ).then((r) => r.json());
+  assert.equal(pack.data.agent.id, "peak.close.crm-gl-revenue");
+  assert.ok(pack.data.sipoc);
+  assert.ok(pack.data.acceptance);
+});
+
+test("cluster run sequences connectors detect investigate report", async () => {
+  const { token } = await login();
+  const res = await fetch(`${BASE}/cluster/run`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  });
+  assert.equal(res.status, 201);
+  const body = await res.json();
+  assert.equal(body.data.status, "completed");
+  assert.ok(body.data.recon_run_id);
+  assert.ok(body.data.report);
+  const steps = body.data.steps.map((s) => s.step);
+  assert.ok(steps.includes("connector_sync"));
+  assert.ok(steps.includes("detect"));
+  assert.ok(steps.includes("investigate"));
+  assert.ok(steps.includes("resolve"));
+  assert.ok(steps.includes("report"));
+  const resolve = body.data.steps.find((s) => s.step === "resolve");
+  assert.equal(resolve.status, "awaiting_human");
+});
