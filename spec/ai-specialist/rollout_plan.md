@@ -23,11 +23,15 @@
 
 ### Week 2 — LoRA pilot
 
-1. Train adapter on `split=train` only (`models/collections-lora/train_only.jsonl`)
-2. Re-run `run_local_eval.py` with `--adapter-dir models/collections-lora` (real weights, not heuristic stub)
-3. Compare CSV/JSON vs Week 1 lock; require hallucination &lt; 5% and policy_pass ≥ 0.95
-4. Collections SME sign-off on remaining failure cases
-5. Publish Week 2 comparison report under `spec/ai-specialist/`
+**If no local NVIDIA GPU:** use Colab — `docs/ai-serving/COLAB_README.md` + `notebooks/collections_lora_colab.ipynb`.
+
+1. Prepare train split: `python scripts/prepare_lora_train.py` (15 chats; no holdout)
+2. Train QLoRA on Colab (or local CUDA) with `train_only.jsonl` / repo clone
+3. Score holdout in Colab → `colab_holdout_metrics.json` (authoritative Week 2 numbers)
+4. Download adapter bundle into `models/collections-lora/`
+5. Compare vs Week 1 lock; require hallucination &lt; 5% and policy_pass ≥ 0.95
+6. Collections SME sign-off on remaining failure cases
+7. Publish Week 2 comparison report under `spec/ai-specialist/`
 
 Priority miss classes: parent-child, PTP hold, manager escalate, mid-dollar email vs call.
 
