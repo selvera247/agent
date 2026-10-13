@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../api/auth";
+import AuthControls from "../auth/AuthControls";
 
 const links = [
   { to: "/studio", label: "Spec Studio", end: true },
@@ -13,7 +14,8 @@ const links = [
 ];
 
 export default function Shell() {
-  const { user, logout } = useAuth();
+  const { user, logout, authConfig } = useAuth();
+  const clerkMode = (authConfig?.mode || "local") === "clerk";
 
   return (
     <div className="app-shell">
@@ -34,6 +36,7 @@ export default function Shell() {
           <span>
             {user?.role} · {user?.email}
           </span>
+          {clerkMode ? <AuthControls /> : null}
           <button type="button" onClick={logout}>
             Sign out
           </button>
