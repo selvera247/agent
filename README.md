@@ -108,6 +108,19 @@ npm test -w @findatagraph/api
 npm run build
 ```
 
+## Recon MCP
+
+`apps/mcp` — Model Context Protocol server for exceptions, sync, runs, corrections, audit.
+Wraps the FinDataGraph API (not a parallel warehouse path). Close Agent flux/commentary MCP stays separate.
+
+```bash
+npm run dev:api          # required
+npm run dev:mcp          # stdio MCP
+npm run eval:mcp         # planted-break harness (expect 4/4)
+```
+
+See [`apps/mcp/README.md`](apps/mcp/README.md).
+
 ## Source platforms (this round)
 
 Connectors for **Postgres, MySQL, Snowflake, Databricks** (plus BigQuery/Fabric stubs)

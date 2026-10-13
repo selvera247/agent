@@ -11,4 +11,5 @@ build/
 coverage/
 .vite/
 apps/api/data/
+apps/mcp/exports/
 *.log

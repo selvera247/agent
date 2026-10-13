@@ -62,6 +62,22 @@ See [SOURCES.md](./SOURCES.md) for the connector contract.
 - Material waive/correct requires `controller` or `admin`
 - Every mutation writes `audit_log`
 
+## MCP skill surface
+
+```
+Close Agent MCP (flux/commentary)     FinDataGraph Recon MCP (this repo)
+         │                                      │
+         └──────── shared governance ───────────┘
+              cite IDs · human gate · planted evals
+                           │
+                           ▼
+                  FinDataGraph HTTP API
+                           │
+              Postgres / MySQL / Snowflake / Databricks
+```
+
+Recon MCP tools wrap `/api/v1` only — see `apps/mcp/README.md`.
+
 ## API versioning
 
 All routes under `/api/v1`. Breaking changes → `/api/v2`.

@@ -16,7 +16,9 @@
     "build:web": "npm run build -w @findatagraph/web",
     "start:prod": "npm run build:web && NODE_ENV=production CORS_ORIGIN=* npm run start -w @findatagraph/api",
     "db:seed": "npm run db:seed -w @findatagraph/api",
-    "test": "npm run test -w @findatagraph/api"
+    "dev:mcp": "npm start -w @findatagraph/mcp",
+    "eval:mcp": "npm run eval -w @findatagraph/mcp",
+    "test": "npm run test -w @findatagraph/api && npm run test -w @findatagraph/mcp"
   },
   "engines": {
     "node": ">=18"
