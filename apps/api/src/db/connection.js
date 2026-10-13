@@ -65,6 +65,10 @@ function migrate(database) {
   if (!userCols.includes("external_id")) {
     database.exec(`ALTER TABLE users ADD COLUMN external_id TEXT`);
   }
+  // Index after columns exist (CREATE TABLE IF NOT EXISTS skips new cols on old DBs)
+  database.exec(
+    `CREATE INDEX IF NOT EXISTS idx_users_external ON users(auth_provider, external_id)`
+  );
 }
 
 export function getDb() {
