@@ -7,7 +7,7 @@ registry/
 ├── agents/
 │   ├── peak-close-crm-gl/           # Week-1 Jumpstart SKU
 │   └── collections-recommendation/  # Second domain pack
-└── mcp/                             # Connector stubs (Salesforce, NetSuite, …)
+└── mcp/                             # Connector stubs (Snowflake primary, SF/NS stubs, …)
 ```
 
 API: `GET /api/v1/registry/agents` · `GET /api/v1/registry/agents/:id`

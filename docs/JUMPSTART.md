@@ -6,9 +6,9 @@ Frozen deliverable for client engagements: **one governed agent** on the client�
 
 | | |
 |---|---|
-| **Suppliers** | Client CRM (Salesforce Billing), ERP/GL (NetSuite), finance controllers, IT/security |
-| **Inputs** | Certified staging extracts (or MCP reads) of invoices + GL revenue lines; materiality & tolerance policy; entity master |
-| **Process** | Map process → configure connectors → run detect matcher → investigate exceptions → HITL resolve/waive → emit Jumpstart report |
+| **Suppliers** | Client Snowflake certified warehouse (and upstream CRM/ERP landings), finance controllers, IT/security |
+| **Inputs** | Certified staging via Snowflake connectors (invoices + GL revenue); materiality & tolerance policy; entity master |
+| **Process** | Map process → configure Snowflake connectors → run detect matcher → investigate exceptions → HITL resolve/waive → emit Jumpstart report |
 | **Outputs** | Exception list · data-quality scorecard · variance memo · evidence hashes for each control action |
 | **Customers** | Controllership, FP&A close owners, internal audit / SOX, IT change-control |
 
