@@ -71,8 +71,8 @@ export default function ConnectorsPage() {
                     <strong>{c.name}</strong>
                     <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>
                       {c.code}
-                      {c.salesforce?.mode
-                        ? ` · SF mode ${c.salesforce.mode}`
+                      {c.snowflake?.mode
+                        ? ` · Snowflake ${c.snowflake.mode}`
                         : ""}
                     </div>
                   </td>

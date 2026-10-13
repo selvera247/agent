@@ -16,8 +16,7 @@
     }
   ],
   "staging_table": "crm_invoices",
-  "status": "live_capable",
-  "modes": ["stub", "sandbox", "live"],
-  "fixture": "fixtures/invoices.live.json",
-  "implementation": "apps/api/src/connectors/salesforce.js"
+  "status": "stub",
+  "modes": ["stub"],
+  "note": "Jumpstart live SoR path is Snowflake certified warehouse — see snowflake.certified.read"
 }

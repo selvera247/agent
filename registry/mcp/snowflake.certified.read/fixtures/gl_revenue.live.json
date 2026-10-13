@@ -1,0 +1,71 @@
+{
+  "warehouse": "COMPUTE_WH",
+  "database": "FINANCE",
+  "schema": "CERTIFIED",
+  "table": "GL_REVENUE_LINES",
+  "rows": [
+    {
+      "SOURCE_ID": "NS_GL_1001",
+      "REFERENCE": "INV-1001",
+      "ACCOUNT_CODE": "4000",
+      "POSTING_DATE": "2026-09-04",
+      "AMOUNT": 125000,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-EAST"
+    },
+    {
+      "SOURCE_ID": "NS_GL_1002",
+      "REFERENCE": "INV-1002",
+      "ACCOUNT_CODE": "4000",
+      "POSTING_DATE": "2026-09-06",
+      "AMOUNT": 48000,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-EAST"
+    },
+    {
+      "SOURCE_ID": "NS_GL_1003",
+      "REFERENCE": "INV-1003",
+      "ACCOUNT_CODE": "4000",
+      "POSTING_DATE": "2026-09-09",
+      "AMOUNT": 91000,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-WEST"
+    },
+    {
+      "SOURCE_ID": "NS_GL_1004",
+      "REFERENCE": "INV-1004",
+      "ACCOUNT_CODE": "4000",
+      "POSTING_DATE": "2026-09-13",
+      "AMOUNT": 15600,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-WEST"
+    },
+    {
+      "SOURCE_ID": "NS_GL_1005",
+      "REFERENCE": "INV-1005",
+      "ACCOUNT_CODE": "4000",
+      "POSTING_DATE": "2026-09-16",
+      "AMOUNT": 72000,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-EAST"
+    },
+    {
+      "SOURCE_ID": "NS_GL_1006",
+      "REFERENCE": "INV-1006",
+      "ACCOUNT_CODE": "4000",
+      "POSTING_DATE": "2026-09-19",
+      "AMOUNT": 33400,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-EAST"
+    },
+    {
+      "SOURCE_ID": "NS_GL_1099",
+      "REFERENCE": "INV-1099",
+      "ACCOUNT_CODE": "4000",
+      "POSTING_DATE": "2026-09-22",
+      "AMOUNT": 5400,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-WEST"
+    }
+  ]
+}

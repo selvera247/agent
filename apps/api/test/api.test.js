@@ -298,18 +298,18 @@ test("cluster run sequences connectors detect investigate report", async () => {
   assert.ok(investigate.packs_with_hits >= 1);
 });
 
-test("salesforce sandbox live sync upserts staging from SoR fixture", async () => {
+test("snowflake stub sync succeeds without CONNECTOR_LIVE", async () => {
   const { token } = await login();
   const syncRes = await fetch(
-    `${BASE}/connectors/salesforce.billing.read/sync`,
+    `${BASE}/connectors/snowflake.invoices.read/sync`,
     {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     }
   );
-  // Without CONNECTOR_LIVE this is stub; exercise sandbox via direct env on child is hard.
-  // Stub still succeeds; live sandbox covered when CONNECTOR_LIVE=1 in dedicated spawn below.
   assert.equal(syncRes.status, 201);
+  const sync = await syncRes.json();
+  assert.equal(sync.data.mode, "stub");
 });
 
 test("hybrid investigate retrieve returns staging citations", async () => {

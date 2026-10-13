@@ -13,7 +13,7 @@ data:
   CORS_ORIGIN: "*"
   POLICY_VERSION: "jumpstart-v1"
   CONNECTOR_LIVE: "1"
-  SF_MODE: "sandbox"
+  SNOWFLAKE_MODE: "sandbox"
   ORCHESTRATOR_URL: "http://findatagraph-orchestrator:8100"
   CONTROL_PLANE_URL: "http://findatagraph:4000"
 ---

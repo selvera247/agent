@@ -7,7 +7,7 @@ import { spawn } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const dbPath = path.join(root, "data/test-sf-live.db");
+const dbPath = path.join(root, "data/test-snowflake-live.db");
 const PORT = 4108;
 const BASE = `http://127.0.0.1:${PORT}/api/v1`;
 
@@ -50,7 +50,7 @@ before(async () => {
       JWT_SECRET: "test-secret",
       CORS_ORIGIN: "http://localhost:5173",
       CONNECTOR_LIVE: "1",
-      SF_MODE: "sandbox",
+      SNOWFLAKE_MODE: "sandbox",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -62,7 +62,7 @@ after(() => {
   if (child) child.kill("SIGTERM");
 });
 
-test("CONNECTOR_LIVE sandbox pulls Salesforce fixture into staging", async () => {
+test("CONNECTOR_LIVE sandbox pulls Snowflake fixtures into staging", async () => {
   const login = await fetch(`${BASE}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -72,23 +72,23 @@ test("CONNECTOR_LIVE sandbox pulls Salesforce fixture into staging", async () =>
     }),
   }).then((r) => r.json());
 
-  const syncRes = await fetch(
-    `${BASE}/connectors/salesforce.billing.read/sync`,
-    {
+  for (const code of ["snowflake.invoices.read", "snowflake.gl_revenue.read"]) {
+    const syncRes = await fetch(`${BASE}/connectors/${code}/sync`, {
       method: "POST",
       headers: { Authorization: `Bearer ${login.token}` },
-    }
-  );
-  assert.equal(syncRes.status, 201);
-  const sync = await syncRes.json();
-  assert.equal(sync.data.mode, "sandbox");
-  assert.equal(sync.data.status, "completed");
-  assert.ok(sync.data.rows_staged >= 7);
+    });
+    assert.equal(syncRes.status, 201, code);
+    const sync = await syncRes.json();
+    assert.equal(sync.data.mode, "sandbox", code);
+    assert.equal(sync.data.status, "completed", code);
+    assert.ok(sync.data.rows_staged >= 7, code);
+  }
 
   const list = await fetch(`${BASE}/connectors`, {
     headers: { Authorization: `Bearer ${login.token}` },
   }).then((r) => r.json());
-  const sf = list.data.find((c) => c.code === "salesforce.billing.read");
-  assert.equal(sf.salesforce.mode, "sandbox");
-  assert.ok(sf.staging_rows >= 7);
+  const inv = list.data.find((c) => c.code === "snowflake.invoices.read");
+  assert.equal(inv.snowflake.mode, "sandbox");
+  assert.ok(inv.staging_rows >= 7);
+  assert.equal(inv.live_capable, true);
 });

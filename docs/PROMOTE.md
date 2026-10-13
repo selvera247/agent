@@ -19,10 +19,11 @@ Workflow: [`.github/workflows/ci-promote.yml`](../.github/workflows/ci-promote.y
 |---|---|
 | `KUBECONFIG_STAGING` / `KUBECONFIG_PRODUCTION` | In-cluster apply |
 | `JWT_SECRET` | API auth |
-| `SF_INSTANCE_URL` / `SF_ACCESS_TOKEN` | Live Salesforce SoR |
+| `SNOWFLAKE_ACCOUNT` / `SNOWFLAKE_USER` / `SNOWFLAKE_PAT` | Live Snowflake SoR |
+| `SNOWFLAKE_WAREHOUSE` / `DATABASE` / `SCHEMA` | Certified table context |
 | `CONNECTOR_LIVE=1` | Enable live/sandbox pull into staging tables |
 
-Staging defaults `SF_MODE=sandbox` (fixture SoR). Production sets `SF_MODE=live` and requires Connected App tokens from the client secret store.
+Staging defaults `SNOWFLAKE_MODE=sandbox` (fixture warehouse). Production sets `SNOWFLAKE_MODE=live` and requires client Snowflake credentials from the secret store.
 
 ## Manual promote
 

@@ -42,7 +42,7 @@ def node_connector_sync(state: ClusterState) -> ClusterState:
     if not state.get("sync_connectors", True):
         return {**state, "steps": steps}
     client = _client(state)
-    for code in ("salesforce.billing.read", "netsuite.gl.read"):
+    for code in ("snowflake.invoices.read", "snowflake.gl_revenue.read"):
         try:
             sync = client.sync_connector(code)
             steps.append(
@@ -66,8 +66,8 @@ def node_connector_sync(state: ClusterState) -> ClusterState:
                     "error": str(exc),
                 }
             )
-            # NetSuite stub failures in live-SF-only mode are non-fatal
-            if code == "salesforce.billing.read":
+            # Invoice side is required for CRM↔GL Jumpstart
+            if code == "snowflake.invoices.read":
                 return {**state, "steps": steps, "error": str(exc), "status": "failed"}
     return {**state, "steps": steps}
 

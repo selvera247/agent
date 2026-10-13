@@ -18,7 +18,7 @@ Forward-deployed shape: configure connectors, agent logic, packaging, and audit 
 3. Deploy via client CI/CD: `dev → staging → production` with their gates.
 4. Mount persistent volume for DB (`DATABASE_PATH`) or point to managed Postgres later.
 5. Set secrets in client secret store: `JWT_SECRET`, connector credentials, LLM endpoints.
-6. Keep `CONNECTOR_LIVE` unset until MCP servers are wired in-tenant; stub sync validates freshness from staging.
+6. Set `CONNECTOR_LIVE=1` with `SNOWFLAKE_MODE=sandbox` for Jumpstart; switch to live Snowflake secrets in-tenant for production (see `docs/LIVE_SNOWFLAKE.md`).
 
 ### Kubernetes sketch
 

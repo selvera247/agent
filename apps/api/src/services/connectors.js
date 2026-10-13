@@ -4,16 +4,37 @@ import { id } from "../lib/ids.js";
 import { writeAudit } from "../lib/audit.js";
 import { recordUsage } from "../lib/usage.js";
 import {
-  salesforceConfigured,
-  salesforceMode,
-  syncSalesforceBilling,
-} from "../connectors/salesforce.js";
+  snowflakeConfigured,
+  snowflakeMode,
+  syncSnowflakeGl,
+  syncSnowflakeInvoices,
+} from "../connectors/snowflake.js";
 
 /**
  * MCP / REST connector catalog for client systems of record.
- * Live mode pulls into certified staging inside client tenancy.
+ * Primary live path: Snowflake certified warehouse (client tenancy).
  */
 export const CONNECTOR_CATALOG = [
+  {
+    code: "snowflake.invoices.read",
+    name: "Snowflake certified CRM invoices",
+    kind: "crm",
+    protocol: "mcp",
+    mcp_uri: "mcp://open-finance/snowflake.invoices.read@1",
+    staging_table: "crm_invoices",
+    source_system_code: "SNOWFLAKE",
+    live_capable: true,
+  },
+  {
+    code: "snowflake.gl_revenue.read",
+    name: "Snowflake certified GL revenue",
+    kind: "erp",
+    protocol: "mcp",
+    mcp_uri: "mcp://open-finance/snowflake.gl_revenue.read@1",
+    staging_table: "gl_revenue_lines",
+    source_system_code: "SNOWFLAKE",
+    live_capable: true,
+  },
   {
     code: "salesforce.billing.read",
     name: "Salesforce Billing (CRM invoices)",
@@ -22,7 +43,7 @@ export const CONNECTOR_CATALOG = [
     mcp_uri: "mcp://open-finance/salesforce.billing.read@1",
     staging_table: "crm_invoices",
     source_system_code: "SFDC",
-    live_capable: true,
+    live_capable: false,
   },
   {
     code: "netsuite.gl.read",
@@ -85,7 +106,7 @@ function liveFlag() {
 
 export function listConnectors(orgId) {
   const db = getDb();
-  const sf = salesforceConfigured();
+  const sfk = snowflakeConfigured();
   return CONNECTOR_CATALOG.map((c) => {
     const sql = STAGING_COUNT_SQL[c.staging_table];
     const stats = sql ? db.prepare(sql).get(orgId) : { n: 0, freshness: null };
@@ -100,10 +121,14 @@ export function listConnectors(orgId) {
     return {
       ...c,
       live_enabled: liveFlag(),
-      salesforce:
-        c.code === "salesforce.billing.read"
-          ? { mode: sf.mode, instance_url: sf.instance_url, has_token: sf.has_token }
-          : undefined,
+      snowflake: c.code.startsWith("snowflake.")
+        ? {
+            mode: sfk.mode,
+            account: sfk.account,
+            database: sfk.database,
+            has_credentials: sfk.has_credentials,
+          }
+        : undefined,
       staging_rows: stats?.n ?? 0,
       staging_freshness_at: stats?.freshness ?? null,
       last_sync: lastSync
@@ -122,8 +147,7 @@ export function listConnectors(orgId) {
 
 /**
  * Sync connector into certified staging.
- * - stub: freshness only
- * - sandbox/live (Salesforce): pull SoR → upsert staging in client DB
+ * Snowflake sandbox/live pulls warehouse rows into client DB only.
  */
 export async function syncConnector({ orgId, userId, connectorCode }) {
   const connector = CONNECTOR_CATALOG.find((c) => c.code === connectorCode);
@@ -138,11 +162,11 @@ export async function syncConnector({ orgId, userId, connectorCode }) {
   const startedAt = new Date().toISOString();
 
   let mode = "stub";
-  if (connectorCode === "salesforce.billing.read" && liveFlag()) {
-    mode = salesforceMode();
+  if (connectorCode.startsWith("snowflake.") && liveFlag()) {
+    mode = snowflakeMode();
   } else if (liveFlag() && connector.live_capable === false) {
     const err = new Error(
-      `Live mode not yet wired for ${connectorCode}; use stub or Salesforce sandbox/live`
+      `Live mode not wired for ${connectorCode}; use Snowflake certified connectors`
     );
     err.status = 501;
     throw err;
@@ -163,8 +187,19 @@ export async function syncConnector({ orgId, userId, connectorCode }) {
       `staging:${connector.staging_table}`,
     ];
 
-    if (connectorCode === "salesforce.billing.read" && mode !== "stub") {
-      const result = await syncSalesforceBilling({ orgId });
+    if (connectorCode === "snowflake.invoices.read" && mode !== "stub") {
+      const result = await syncSnowflakeInvoices({ orgId });
+      rowsRead = result.rows_read;
+      rowsStaged = result.rows_staged;
+      freshness = result.freshness_at;
+      citations = [
+        ...citations,
+        `system_of_record:${result.system_of_record}`,
+        `mode:${result.mode}`,
+        ...result.source_citations,
+      ];
+    } else if (connectorCode === "snowflake.gl_revenue.read" && mode !== "stub") {
+      const result = await syncSnowflakeGl({ orgId });
       rowsRead = result.rows_read;
       rowsStaged = result.rows_staged;
       freshness = result.freshness_at;

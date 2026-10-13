@@ -1,0 +1,7 @@
+code: snowflake.gl_revenue.read
+protocol: mcp
+mcp_uri: mcp://open-finance/snowflake.gl_revenue.read@1
+staging_table: gl_revenue_lines
+source_system_code: SNOWFLAKE
+mode_default: sandbox
+system_of_record: Snowflake

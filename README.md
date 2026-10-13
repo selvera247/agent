@@ -17,7 +17,7 @@ API-first control plane for **detect → investigate → resolve → report**.
 4. Evidence / Trust Cloud (`/evidence`) elevated from audit
 5. Cluster run (`POST /api/v1/cluster/run`) detect → investigate → HITL resolve → report
 6. Client-cloud delivery notes in [docs/CLIENT_CLOUD_DELIVERY.md](docs/CLIENT_CLOUD_DELIVERY.md)
-7. Live Salesforce SoR connector ([docs/LIVE_SALESFORCE.md](docs/LIVE_SALESFORCE.md))
+7. Live Snowflake SoR connector ([docs/LIVE_SNOWFLAKE.md](docs/LIVE_SNOWFLAKE.md))
 8. Promote path GHCR + K8s staging→prod ([docs/PROMOTE.md](docs/PROMOTE.md))
 9. LangGraph orchestrator sidecar (`apps/orchestrator/`, `ORCHESTRATOR_URL`)
 10. Hybrid RAG investigate (`POST /api/v1/investigate/*`)

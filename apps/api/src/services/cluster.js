@@ -218,7 +218,7 @@ async function runLocalGraph({
       const needed =
         definition.match_kind === "cc_auth_settle_cash"
           ? ["processor.auth.read", "processor.settle.read", "bank.deposit.read"]
-          : ["salesforce.billing.read", "netsuite.gl.read"];
+          : ["snowflake.invoices.read", "snowflake.gl_revenue.read"];
 
       for (const code of needed) {
         if (!catalog.find((c) => c.code === code)) continue;

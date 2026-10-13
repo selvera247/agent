@@ -100,6 +100,13 @@ export function seedDatabase({ force = false } = {}) {
   );
   insertSrc.run(crm, orgId, "SFDC", "Salesforce Billing", "crm");
   insertSrc.run(erp, orgId, "NS", "NetSuite ERP", "erp");
+  insertSrc.run(
+    "src_snowflake",
+    orgId,
+    "SNOWFLAKE",
+    "Snowflake certified warehouse",
+    "billing"
+  );
 
   const defId = "rec_crm_gl_revenue";
   db.prepare(

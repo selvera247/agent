@@ -13,8 +13,8 @@ data:
   CORS_ORIGIN: "*"
   POLICY_VERSION: "jumpstart-v1"
   CONNECTOR_LIVE: "1"
-  # Production uses live Salesforce secrets from findatagraph-secrets
-  SF_MODE: "live"
+  # Production uses live Snowflake secrets from findatagraph-secrets
+  SNOWFLAKE_MODE: "live"
   ORCHESTRATOR_URL: "http://findatagraph-orchestrator:8100"
   CONTROL_PLANE_URL: "http://findatagraph:4000"
 ---
