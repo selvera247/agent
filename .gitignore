@@ -21,3 +21,5 @@ data/collections_specialist/internal/
 adapter_model.bin
 adapter_config.json
 .venv-orch/
+__pycache__/
+*.pyc
