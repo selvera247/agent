@@ -108,18 +108,19 @@ npm test -w @findatagraph/api
 npm run build
 ```
 
-## Recon MCP
+## MCP skill packs (v1)
 
-`apps/mcp` — Model Context Protocol server for exceptions, sync, runs, corrections, audit.
-Wraps the FinDataGraph API (not a parallel warehouse path). Close Agent flux/commentary MCP stays separate.
+| Package | Role |
+|---|---|
+| [`apps/mcp`](apps/mcp/README.md) | **Recon** — sources, runs, exceptions, corrections, audit |
+| [`apps/mcp-close`](apps/mcp-close/README.md) | **Close Agent** — TB, variance, flux draft, review queue |
 
 ```bash
-npm run dev:api          # required
-npm run dev:mcp          # stdio MCP
-npm run eval:mcp         # planted-break harness (expect 4/4)
+npm run dev:api
+npm run dev:mcp          # recon stdio
+npm run dev:mcp-close    # close/flux stdio
+npm run eval:all         # recon 4/4 + close planted flux
 ```
-
-See [`apps/mcp/README.md`](apps/mcp/README.md).
 
 ## Source platforms (this round)
 

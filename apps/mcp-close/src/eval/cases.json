@@ -1,0 +1,27 @@
+{
+  "name": "Close Agent planted flux eval set",
+  "disclaimer": "Synthetic ND-US trial balance only.",
+  "periods": { "period_a": "2026-08", "period_b": "2026-09" },
+  "cases": [
+    {
+      "id": "CF-001",
+      "name": "Cloud infra flagged MoM",
+      "expect_account": "6200",
+      "expect_flagged": true,
+      "min_citations_on_draft": 1
+    },
+    {
+      "id": "CF-002",
+      "name": "Product revenue flagged MoM",
+      "expect_account": "4000",
+      "expect_flagged": true,
+      "min_citations_on_draft": 1
+    },
+    {
+      "id": "CF-003",
+      "name": "Salaries not flagged (below policy)",
+      "expect_account": "6100",
+      "expect_flagged": false
+    }
+  ]
+}

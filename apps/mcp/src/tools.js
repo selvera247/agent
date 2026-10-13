@@ -63,6 +63,29 @@ export function registerReconTools(server, client) {
   );
 
   server.tool(
+    "fdg_test_source",
+    "Test connectivity for a source connection (fixture or live). Read-only health check.",
+    {
+      connection_id: z.string(),
+    },
+    async ({ connection_id }) => {
+      try {
+        const data = await client.request(`/sources/${connection_id}/test`, {
+          method: "POST",
+        });
+        return toolResult(
+          { test: data.data },
+          {
+            citations: [{ type: "source_connection_id", id: connection_id }],
+          }
+        );
+      } catch (error) {
+        return toolError(error);
+      }
+    }
+  );
+
+  server.tool(
     "fdg_sync_source",
     "Pull commercial/GL rows from a source connection into certified staging. Controller-grade mutation — cite sync id; then run reconciliation.",
     {
@@ -241,6 +264,64 @@ export function registerReconTools(server, client) {
   );
 
   server.tool(
+    "fdg_assign_exception",
+    "Assign an exception owner (controller/admin). Cite exception + assignee ids.",
+    {
+      exception_id: z.string(),
+      assignee_id: z.string().describe("users.id, e.g. usr_accountant"),
+    },
+    async ({ exception_id, assignee_id }) => {
+      try {
+        const data = await client.request(`/exceptions/${exception_id}/assign`, {
+          method: "POST",
+          body: { assignee_id },
+        });
+        return toolResult(
+          { exception: data.data },
+          {
+            citations: [
+              ...citationsFromException(data.data),
+              { type: "assignee_id", id: assignee_id },
+            ],
+          }
+        );
+      } catch (error) {
+        return toolError(error);
+      }
+    }
+  );
+
+  server.tool(
+    "fdg_decide_correction",
+    "Approve or reject a proposed correction. Controller-only human gate.",
+    {
+      correction_id: z.string(),
+      decision: z.enum(["approved", "rejected"]),
+      note: z.string().optional(),
+    },
+    async ({ correction_id, decision, note }) => {
+      try {
+        const data = await client.request(
+          `/exceptions/corrections/${correction_id}/decide`,
+          {
+            method: "POST",
+            body: { decision, note },
+          }
+        );
+        return toolResult(
+          { correction: data.data },
+          {
+            humanGate: true,
+            citations: [{ type: "correction_id", id: correction_id }],
+          }
+        );
+      } catch (error) {
+        return toolError(error);
+      }
+    }
+  );
+
+  server.tool(
     "fdg_resolve_exception",
     "Mark exception resolved with a documented note. HUMAN GATE: only use when a controller has confirmed; never invent clearance.",
     {
@@ -273,6 +354,63 @@ export function registerReconTools(server, client) {
             citations: citationsFromException(data.data),
           }
         );
+      } catch (error) {
+        return toolError(error);
+      }
+    }
+  );
+
+  server.tool(
+    "fdg_waive_exception",
+    "Waive an exception with a controllership note. HUMAN GATE: controller_confirmed required; material waives need controller role on API.",
+    {
+      exception_id: z.string(),
+      note: z.string().min(5),
+      controller_confirmed: z.boolean(),
+    },
+    async ({ exception_id, note, controller_confirmed }) => {
+      if (!controller_confirmed) {
+        return toolResult(
+          {
+            rejected: true,
+            reason: "controller_confirmed=false — will not waive.",
+          },
+          { humanGate: true, citations: [{ type: "exception_id", id: exception_id }] }
+        );
+      }
+      try {
+        const data = await client.request(`/exceptions/${exception_id}/waive`, {
+          method: "POST",
+          body: { note },
+        });
+        return toolResult(
+          { exception: data.data },
+          {
+            humanGate: true,
+            citations: citationsFromException(data.data),
+          }
+        );
+      } catch (error) {
+        return toolError(error);
+      }
+    }
+  );
+
+  server.tool(
+    "fdg_list_users",
+    "List users for assignment (id, name, role). Controller/admin.",
+    {},
+    async () => {
+      try {
+        const data = await client.request("/users");
+        return toolResult({
+          users: data.data.map((u) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            role: u.role,
+          })),
+        });
       } catch (error) {
         return toolError(error);
       }

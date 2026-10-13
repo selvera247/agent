@@ -34,12 +34,12 @@ Agents are clients. The graph is the product.
 
 ## Horizon (ordered)
 
-1. ~~Warehouse connectors + recon MCP + planted evals~~ (this milestone)  
-2. Durable hosted demo + portfolio Launch button  
-3. Live warehouse views (one Postgres or Snowflake mart)  
-4. SAP SD–shaped billing↔FI slice **or** eBS sub↔SLA↔GL slice  
-5. Unified agent: Close Agent + Recon MCP in one controller workflow  
-6. Optional governed write-back (parked JE) — still HITL  
+1. ~~Warehouse connectors + recon MCP + close MCP + planted evals (v1)~~
+2. Durable hosted demo + portfolio Launch button
+3. Live warehouse views (one Postgres or Snowflake mart)
+4. SAP SD–shaped billing↔FI slice **or** eBS sub↔SLA↔GL slice
+5. Unified agent session loading **both** MCP skill packs
+6. Optional governed write-back (parked JE) — still HITL
 
 ## Success metrics (product)
 
