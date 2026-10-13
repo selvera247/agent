@@ -13,7 +13,7 @@
 | Run local Ollama baseline on holdout | Done |
 | Produce baseline metrics | Locked below |
 | Harden prompts / synonyms / evaluator from failure notes | Done |
-| Dry-run LoRA data prep (`train_lora_example.sh`) | Done — 15 train chat rows → `models/collections-lora/train_only.jsonl` (gitignored; local only) |
+| Dry-run LoRA data prep | Done — `python scripts/prepare_lora_train.py` (or `train_lora_example.sh` on Linux) → 15 train chats |
 | SME label review packet | Done — `baseline_sme_review.md` (**CJ confirmed all 10 holdout labels 2026-10-12**) |
 
 ## Locked baseline metrics
