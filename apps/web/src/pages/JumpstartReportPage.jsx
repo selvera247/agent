@@ -80,6 +80,8 @@ export default function JumpstartReportPage() {
                 {s.exception_count != null
                   ? ` · ${s.exception_count} exceptions`
                   : ""}
+                {s.retrieval_mode ? ` · ${s.retrieval_mode}` : ""}
+                {s.mode ? ` · ${s.mode}` : ""}
                 {s.hitl ? " · HITL checkpoint" : ""}
               </li>
             ))}

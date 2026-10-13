@@ -12,9 +12,9 @@ router.post(
   "/:code/sync",
   requireAuth,
   requireRoles("admin", "controller"),
-  (req, res) => {
+  async (req, res) => {
     try {
-      const sync = syncConnector({
+      const sync = await syncConnector({
         orgId: req.user.org_id,
         userId: req.user.id,
         connectorCode: req.params.code,

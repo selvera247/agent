@@ -22,15 +22,20 @@ router.post(
   "/run",
   requireAuth,
   requireRoles("admin", "controller"),
-  (req, res) => {
+  async (req, res) => {
     try {
       const body = req.body || {};
-      const result = runJumpstartCluster({
+      const authHeader = req.headers.authorization || "";
+      const authToken = authHeader.startsWith("Bearer ")
+        ? authHeader.slice(7)
+        : null;
+      const result = await runJumpstartCluster({
         orgId: req.user.org_id,
         userId: req.user.id,
         definitionId: body.definition_id || null,
         agentId: body.agent_id || undefined,
         syncConnectors: body.sync_connectors !== false,
+        authToken,
       });
       res.status(201).json({ data: result });
     } catch (error) {

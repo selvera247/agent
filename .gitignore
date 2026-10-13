@@ -20,3 +20,4 @@ data/collections_specialist/internal/
 *.gguf
 adapter_model.bin
 adapter_config.json
+.venv-orch/

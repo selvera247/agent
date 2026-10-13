@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: findatagraph-staging
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: findatagraph-config
+  namespace: findatagraph-staging
+data:
+  NODE_ENV: "production"
+  CORS_ORIGIN: "*"
+  POLICY_VERSION: "jumpstart-v1"
+  CONNECTOR_LIVE: "1"
+  SF_MODE: "sandbox"
+  ORCHESTRATOR_URL: "http://findatagraph-orchestrator:8100"
+  CONTROL_PLANE_URL: "http://findatagraph:4000"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: findatagraph
+  namespace: findatagraph-staging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: findatagraph
+  template:
+    metadata:
+      labels:
+        app: findatagraph
+    spec:
+      containers:
+        - name: api
+          image: __IMAGE_API__
+          ports:
+            - containerPort: 4000
+          envFrom:
+            - configMapRef:
+                name: findatagraph-config
+            - secretRef:
+                name: findatagraph-secrets
+                optional: true
+          env:
+            - name: PORT
+              value: "4000"
+            - name: DATABASE_PATH
+              value: /data/findatagraph.db
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: findatagraph-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: findatagraph-orchestrator
+  namespace: findatagraph-staging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: findatagraph-orchestrator
+  template:
+    metadata:
+      labels:
+        app: findatagraph-orchestrator
+    spec:
+      containers:
+        - name: orchestrator
+          image: __IMAGE_ORCH__
+          ports:
+            - containerPort: 8100
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8100
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: findatagraph
+  namespace: findatagraph-staging
+spec:
+  selector:
+    app: findatagraph
+  ports:
+    - port: 4000
+      targetPort: 4000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: findatagraph-orchestrator
+  namespace: findatagraph-staging
+spec:
+  selector:
+    app: findatagraph-orchestrator
+  ports:
+    - port: 8100
+      targetPort: 8100
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: findatagraph-data
+  namespace: findatagraph-staging
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi

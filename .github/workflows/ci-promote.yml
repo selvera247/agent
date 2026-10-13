@@ -1,0 +1,148 @@
+name: CI and promote
+
+on:
+  push:
+    branches: [main, "cursor/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options: [staging, production]
+      image_tag:
+        description: Image tag to promote (default = github.sha)
+        required: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_API: ghcr.io/${{ github.repository_owner }}/findatagraph
+  IMAGE_ORCH: ghcr.io/${{ github.repository_owner }}/findatagraph-orchestrator
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Orchestrator unit tests
+        working-directory: apps/orchestrator
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+          PYTHONPATH=src pytest -q
+
+  build-and-push:
+    needs: test
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      api_digest: ${{ steps.meta_api.outputs.digest }}
+      tag: ${{ steps.vars.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag
+        id: vars
+        run: |
+          TAG="${{ github.event.inputs.image_tag || github.sha }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Build API image
+        id: meta_api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_API }}:${{ steps.vars.outputs.tag }}
+            ${{ env.IMAGE_API }}:sha-${{ github.sha }}
+      - name: Build orchestrator image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/orchestrator
+          file: apps/orchestrator/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_ORCH }}:${{ steps.vars.outputs.tag }}
+            ${{ env.IMAGE_ORCH }}:sha-${{ github.sha }}
+
+  deploy-staging:
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/cursor/')
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render staging manifests
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.tag }}
+          IMAGE_API: ${{ env.IMAGE_API }}
+          IMAGE_ORCH: ${{ env.IMAGE_ORCH }}
+        run: |
+          mkdir -p /tmp/manifests
+          sed -e "s|__IMAGE_API__|${IMAGE_API}:${IMAGE_TAG}|g" \
+              -e "s|__IMAGE_ORCH__|${IMAGE_ORCH}:${IMAGE_TAG}|g" \
+              deploy/k8s/staging/deployment.yaml > /tmp/manifests/staging.yaml
+          echo "Rendered staging manifest for tag ${IMAGE_TAG}"
+          head -40 /tmp/manifests/staging.yaml
+      - name: Apply to staging (when kubeconfig secret present)
+        env:
+          KUBECONFIG_CONTENTS: ${{ secrets.KUBECONFIG_STAGING }}
+        run: |
+          if [ -z "$KUBECONFIG_CONTENTS" ]; then
+            echo "KUBECONFIG_STAGING not set — manifest rendered only (client applies under change control)"
+            exit 0
+          fi
+          echo "$KUBECONFIG_CONTENTS" > /tmp/kubeconfig
+          export KUBECONFIG=/tmp/kubeconfig
+          kubectl apply -f /tmp/manifests/staging.yaml
+          kubectl -n findatagraph-staging rollout status deploy/findatagraph --timeout=180s
+
+  deploy-production:
+    needs: build-and-push
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render production manifests
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.tag }}
+          IMAGE_API: ${{ env.IMAGE_API }}
+          IMAGE_ORCH: ${{ env.IMAGE_ORCH }}
+        run: |
+          sed -e "s|__IMAGE_API__|${IMAGE_API}:${IMAGE_TAG}|g" \
+              -e "s|__IMAGE_ORCH__|${IMAGE_ORCH}:${IMAGE_TAG}|g" \
+              deploy/k8s/production/deployment.yaml > /tmp/production.yaml
+          echo "Rendered production manifest for tag ${IMAGE_TAG}"
+      - name: Apply to production
+        env:
+          KUBECONFIG_CONTENTS: ${{ secrets.KUBECONFIG_PRODUCTION }}
+        run: |
+          if [ -z "$KUBECONFIG_CONTENTS" ]; then
+            echo "KUBECONFIG_PRODUCTION not set — manifest rendered only"
+            exit 0
+          fi
+          echo "$KUBECONFIG_CONTENTS" > /tmp/kubeconfig
+          export KUBECONFIG=/tmp/kubeconfig
+          kubectl apply -f /tmp/production.yaml
+          kubectl -n findatagraph-prod rollout status deploy/findatagraph --timeout=300s

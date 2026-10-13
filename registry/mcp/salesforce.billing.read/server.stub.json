@@ -16,5 +16,8 @@
     }
   ],
   "staging_table": "crm_invoices",
-  "status": "stub"
+  "status": "live_capable",
+  "modes": ["stub", "sandbox", "live"],
+  "fixture": "fixtures/invoices.live.json",
+  "implementation": "apps/api/src/connectors/salesforce.js"
 }

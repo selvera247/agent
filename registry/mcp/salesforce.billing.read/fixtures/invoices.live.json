@@ -1,0 +1,76 @@
+{
+  "totalSize": 7,
+  "done": true,
+  "records": [
+    {
+      "attributes": { "type": "Invoice__c", "url": "/services/data/v59.0/sobjects/Invoice__c/a0B000000000001" },
+      "Id": "a0B000000000001AAA",
+      "Name": "INV-1001",
+      "Account": { "Name": "Acme Stores" },
+      "Amount__c": 125000,
+      "Invoice_Date__c": "2026-09-03",
+      "Entity_Code__c": "US-EAST",
+      "CurrencyIsoCode": "USD"
+    },
+    {
+      "attributes": { "type": "Invoice__c" },
+      "Id": "a0B000000000002AAA",
+      "Name": "INV-1002",
+      "Account": { "Name": "Northwind" },
+      "Amount__c": 48250.5,
+      "Invoice_Date__c": "2026-09-05",
+      "Entity_Code__c": "US-EAST",
+      "CurrencyIsoCode": "USD"
+    },
+    {
+      "attributes": { "type": "Invoice__c" },
+      "Id": "a0B000000000003AAA",
+      "Name": "INV-1003",
+      "Account": { "Name": "Contoso" },
+      "Amount__c": 91000,
+      "Invoice_Date__c": "2026-09-08",
+      "Entity_Code__c": "US-WEST",
+      "CurrencyIsoCode": "USD"
+    },
+    {
+      "attributes": { "type": "Invoice__c" },
+      "Id": "a0B000000000004AAA",
+      "Name": "INV-1004",
+      "Account": { "Name": "Fabrikam" },
+      "Amount__c": 15600,
+      "Invoice_Date__c": "2026-09-12",
+      "Entity_Code__c": "US-WEST",
+      "CurrencyIsoCode": "USD"
+    },
+    {
+      "attributes": { "type": "Invoice__c" },
+      "Id": "a0B000000000005AAA",
+      "Name": "INV-1005",
+      "Account": { "Name": "Litware EU" },
+      "Amount__c": 72000,
+      "Invoice_Date__c": "2026-09-15",
+      "Entity_Code__c": "EU-CORE",
+      "CurrencyIsoCode": "EUR"
+    },
+    {
+      "attributes": { "type": "Invoice__c" },
+      "Id": "a0B000000000006AAA",
+      "Name": "INV-1006",
+      "Account": { "Name": "Adventure Works" },
+      "Amount__c": 33400,
+      "Invoice_Date__c": "2026-09-18",
+      "Entity_Code__c": "US-EAST",
+      "CurrencyIsoCode": "USD"
+    },
+    {
+      "attributes": { "type": "Invoice__c" },
+      "Id": "a0B000000000007AAA",
+      "Name": "INV-1007",
+      "Account": { "Name": "Tailspin Toys" },
+      "Amount__c": 18800,
+      "Invoice_Date__c": "2026-09-20",
+      "Entity_Code__c": "US-WEST",
+      "CurrencyIsoCode": "USD"
+    }
+  ]
+}
