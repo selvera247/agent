@@ -82,6 +82,18 @@ Adapters stay **local** under `models/collections-lora/`. After training:
 python scripts/run_local_eval.py --adapter-dir models/collections-lora
 ```
 
+### Windows (no bash / WSL)
+
+Prepare train-split chat JSONL with Python only:
+
+```powershell
+python scripts\prepare_lora_train.py
+# output: models\collections-lora\train_only.jsonl  (15 rows, no holdout)
+```
+
+Then train on a CUDA machine using that file (Unsloth/PEFT). Optional env vars match the shell script: `DATA_PATH`, `OUTPUT_DIR`, `BASE_MODEL_PATH`, `LORA_R`, etc.
+
+
 Until a local PEFT server is wired, the runner documents adapter absence and uses the heuristic fallback for CI.
 
 ## Privacy checklist
