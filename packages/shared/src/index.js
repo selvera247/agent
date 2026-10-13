@@ -38,7 +38,31 @@ export const AUDIT_ACTIONS = Object.freeze({
   CORRECTION_PROPOSED: "correction_proposed",
   CORRECTION_APPROVED: "correction_approved",
   CORRECTION_REJECTED: "correction_rejected",
+  SOURCE_SYNC_STARTED: "source_sync_started",
+  SOURCE_SYNC_COMPLETED: "source_sync_completed",
+  SOURCE_SYNC_FAILED: "source_sync_failed",
 });
 
 /** Materiality threshold in USD — dual control recommended above this */
 export const MATERIALITY_USD = 10000;
+
+/** First-round warehouse / SQL platforms (ERP adapters come later) */
+export const SOURCE_PLATFORMS = Object.freeze({
+  POSTGRES: "postgres",
+  MYSQL: "mysql",
+  SNOWFLAKE: "snowflake",
+  DATABRICKS: "databricks",
+  BIGQUERY: "bigquery",
+  FABRIC: "fabric",
+});
+
+export const SOURCE_MODES = Object.freeze({
+  FIXTURE: "fixture",
+  LIVE: "live",
+});
+
+export const SYNC_STATUS = Object.freeze({
+  RUNNING: "running",
+  COMPLETED: "completed",
+  FAILED: "failed",
+});

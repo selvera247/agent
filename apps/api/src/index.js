@@ -5,7 +5,7 @@ import morgan from "morgan";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getDb } from "./db/connection.js";
-import { seedDatabase } from "./db/seed.js";
+import { seedDatabase, ensureSourceConnections } from "./db/seed.js";
 import authRoutes from "./routes/auth.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import entityRoutes from "./routes/entities.js";
@@ -13,6 +13,7 @@ import reconciliationRoutes from "./routes/reconciliations.js";
 import exceptionRoutes from "./routes/exceptions.js";
 import auditRoutes from "./routes/audit.js";
 import userRoutes from "./routes/users.js";
+import sourceRoutes from "./routes/sources.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 4000);
@@ -21,6 +22,7 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
 // Ensure DB + schema exist, then seed demo data if empty
 getDb();
 seedDatabase({ force: false });
+ensureSourceConnections();
 
 const app = express();
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
@@ -48,6 +50,7 @@ app.use("/api/v1/reconciliations", reconciliationRoutes);
 app.use("/api/v1/exceptions", exceptionRoutes);
 app.use("/api/v1/audit", auditRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/sources", sourceRoutes);
 
 // Production: serve built web client from the same host
 const webDist = path.join(__dirname, "../../web/dist");

@@ -108,6 +108,15 @@ npm test -w @findatagraph/api
 npm run build
 ```
 
+## Source platforms (this round)
+
+Connectors for **Postgres, MySQL, Snowflake, Databricks** (plus BigQuery/Fabric stubs)
+pull canonical commercial + GL rows into certified staging. See [docs/SOURCES.md](docs/SOURCES.md).
+
+- Fixture mode works offline (seeded connections)
+- UI: **Sources** → Test / Sync → then **Runs** for matching
+- Live mode: set env vars in `.env.example` and flip connection `mode` to `live`
+
 ## Hosted live demo
 
 Single-host production mode (API serves the web build):

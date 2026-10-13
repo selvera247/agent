@@ -7,6 +7,7 @@ import ExceptionsPage from "./pages/ExceptionsPage";
 import ExceptionDetailPage from "./pages/ExceptionDetailPage";
 import RunsPage from "./pages/RunsPage";
 import AuditPage from "./pages/AuditPage";
+import SourcesPage from "./pages/SourcesPage";
 
 function Protected({ children }) {
   const { token, booting } = useAuth();
@@ -28,6 +29,7 @@ export default function App() {
         }
       >
         <Route index element={<DashboardPage />} />
+        <Route path="sources" element={<SourcesPage />} />
         <Route path="exceptions" element={<ExceptionsPage />} />
         <Route path="exceptions/:id" element={<ExceptionDetailPage />} />
         <Route path="runs" element={<RunsPage />} />

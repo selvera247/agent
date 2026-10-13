@@ -3,6 +3,7 @@ import { useAuth } from "../api/auth";
 
 const links = [
   { to: "/", label: "Dashboard", end: true },
+  { to: "/sources", label: "Sources" },
   { to: "/exceptions", label: "Exceptions" },
   { to: "/runs", label: "Runs" },
   { to: "/audit", label: "Audit" },

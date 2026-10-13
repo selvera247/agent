@@ -23,10 +23,14 @@ The web app is one client; the API is the product surface.
                                     │  → Postgres later│
                                     └──────────────────┘
 
-External (future adapters)
-  ERP / CRM / Billing ──ETL──► Certified staging tables
+External sources (this round)
+  Postgres / MySQL / Snowflake / Databricks ──SourceAdapter──► Certified staging
+  (later: Oracle eBS / SAP SD on the same contract)
   Identity (Okta/Entra) ──────► JWT / OIDC swap-in
 ```
+
+See [SOURCES.md](./SOURCES.md) for the connector contract.
+
 
 ## Bounded contexts
 
