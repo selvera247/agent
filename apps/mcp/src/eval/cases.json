@@ -1,0 +1,46 @@
+{
+  "name": "FinDataGraph planted-break eval set",
+  "disclaimer": "Synthetic Meridian Retail data only. Cases assert exception types after fixture sync + CRM↔GL run.",
+  "setup": {
+    "source_connection_id": "srcconn_postgres",
+    "definition_id": "rec_crm_gl_revenue"
+  },
+  "cases": [
+    {
+      "id": "PB-001",
+      "name": "Amount mismatch INV-1002",
+      "planted": "CRM 48250.50 vs GL 48000",
+      "expect": {
+        "reference": "INV-1002",
+        "exception_type": "amount_mismatch"
+      }
+    },
+    {
+      "id": "PB-002",
+      "name": "Missing in GL INV-1007",
+      "planted": "CRM invoice with no GL reference",
+      "expect": {
+        "reference": "INV-1007",
+        "exception_type": "missing_in_gl"
+      }
+    },
+    {
+      "id": "PB-003",
+      "name": "Missing in CRM INV-1099",
+      "planted": "Orphan GL line",
+      "expect": {
+        "reference": "INV-1099",
+        "exception_type": "missing_in_crm"
+      }
+    },
+    {
+      "id": "PB-004",
+      "name": "Entity mismatch INV-1005",
+      "planted": "CRM EU-CORE vs GL US-EAST",
+      "expect": {
+        "reference": "INV-1005",
+        "exception_type": "entity_mismatch"
+      }
+    }
+  ]
+}

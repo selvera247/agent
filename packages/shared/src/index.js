@@ -51,6 +51,9 @@ export const AUDIT_ACTIONS = Object.freeze({
   CLUSTER_STARTED: "cluster_started",
   CLUSTER_COMPLETED: "cluster_completed",
   EVIDENCE_RECORDED: "evidence_recorded",
+  SOURCE_SYNC_STARTED: "source_sync_started",
+  SOURCE_SYNC_COMPLETED: "source_sync_completed",
+  SOURCE_SYNC_FAILED: "source_sync_failed",
 });
 
 export const MATCH_KINDS = Object.freeze({
@@ -86,3 +89,24 @@ export const CLUSTER_STEPS = Object.freeze([
   "resolve",
   "report",
 ]);
+
+/** First-round warehouse / SQL platforms (ERP adapters come later) */
+export const SOURCE_PLATFORMS = Object.freeze({
+  POSTGRES: "postgres",
+  MYSQL: "mysql",
+  SNOWFLAKE: "snowflake",
+  DATABRICKS: "databricks",
+  BIGQUERY: "bigquery",
+  FABRIC: "fabric",
+});
+
+export const SOURCE_MODES = Object.freeze({
+  FIXTURE: "fixture",
+  LIVE: "live",
+});
+
+export const SYNC_STATUS = Object.freeze({
+  RUNNING: "running",
+  COMPLETED: "completed",
+  FAILED: "failed",
+});

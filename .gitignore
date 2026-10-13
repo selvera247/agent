@@ -11,6 +11,9 @@ build/
 coverage/
 .vite/
 apps/api/data/
+apps/mcp/exports/
+apps/mcp-close/exports/
+apps/mcp-close/src/data/review_queue.json
 *.log
 
 # Collections specialist — local weights & internal maps only

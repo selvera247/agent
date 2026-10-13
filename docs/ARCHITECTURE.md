@@ -25,8 +25,10 @@ The web app is one client; the API is the product surface.
 
 External adapters
   ERP / CRM / Billing ──MCP/REST stub──► Certified staging tables
+  Warehouse / SQL Sources ──SourceAdapter──► Staging (fixture or live)
   Identity (Okta/Entra) ──────► JWT / OIDC swap-in
   Practice library (`registry/`) ──► Agent packages + connector contracts
+  MCP clients (`apps/mcp`, `apps/mcp-close`) ──stdio──► FinDataGraph API
 ```
 
 ## Bounded contexts
@@ -35,14 +37,16 @@ External adapters
 |---|---|
 | Identity | Users, roles, JWT auth |
 | Master data | Legal entities, source systems |
+| Sources | Multi-platform warehouse connections + sync |
 | Reconciliation | Definitions, runs, matching engine |
 | Exceptions | Lifecycle, assignment, resolution |
 | Approvals | Dual-control for material actions |
 | Audit | Append-only event log |
 | Evidence | Hashed Trust Cloud records + source citations |
-| Connectors | MCP/REST catalog + stub/live sync |
+| Connectors | MCP/REST catalog + stub/live sync (Jumpstart Snowflake) |
 | Jumpstart / Cluster | Diagnostic report + multi-step orchestration |
 | Registry | Practice-library agent packages |
+| MCP skills | Recon HITL + Close Agent flux tools over the API |
 
 ## Scalability path
 

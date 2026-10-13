@@ -32,11 +32,13 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 apps/web  ──JSON/JWT──►  apps/api  ──SQL──►  SQLite (Postgres-ready schema)
                               │
                          matching engine
+                         Sources adapters
                          audit log
                          RBAC
+apps/mcp · apps/mcp-close ──MCP stdio──►  apps/api (recon + close skills)
 ```
 
-**Bounded contexts:** Identity · Master data · Reconciliation · Exceptions · Approvals · Audit
+**Bounded contexts:** Identity · Master data · Sources · Reconciliation · Exceptions · Approvals · Audit
 
 ## File structure
 
@@ -46,20 +48,19 @@ findatagraph/
 │   ├── api/                 # Headless Express API
 │   │   ├── src/
 │   │   │   ├── db/          # schema.sql, connection, seed
+│   │   │   ├── connectors/  # Jumpstart Snowflake + multi-platform Sources
 │   │   │   ├── routes/      # versioned HTTP handlers
 │   │   │   ├── services/    # matching engine
 │   │   │   ├── middleware/  # JWT auth + RBAC
 │   │   │   └── lib/         # ids, audit writer
 │   │   └── test/
-│   └── web/                 # React controller UI
-│       └── src/
-│           ├── api/         # client + auth context
-│           ├── components/
-│           ├── pages/
-│           └── styles/
+│   ├── web/                 # React controller UI
+│   ├── mcp/                 # Recon MCP (stdio) wrapping the API
+│   ├── mcp-close/           # Close Agent MCP (TB / variance / subledger)
+│   └── orchestrator/        # LangGraph sidecar
 ├── packages/shared/         # roles, statuses, shared constants
 ├── registry/                # Practice library (agent packages + MCP stubs)
-├── docs/                    # ARCHITECTURE, JUMPSTART, SCALE_PATH, delivery
+├── docs/                    # ARCHITECTURE, JUMPSTART, SOURCES, NORTH_STAR
 └── package.json             # npm workspaces
 ```
 
@@ -107,6 +108,10 @@ findatagraph/
 | GET | `/specs/usage` | Demo credit meter |
 | GET | `/reports/jumpstart` | Exception list + DQ scorecard + variance memo |
 | GET | `/evidence` | Trust Cloud evidence (hash, citations, policy) |
+| GET | `/sources/platforms` | Multi-platform warehouse adapters |
+| GET | `/sources` | Source connections (Postgres/MySQL/Snowflake/Databricks/…) |
+| POST | `/sources/:id/test` | Connectivity probe |
+| POST | `/sources/:id/sync` | Pull commercial/GL into staging |
 | GET | `/connectors` | MCP/REST connector catalog + staging freshness |
 | POST | `/connectors/:code/sync` | Stub sync (live mode client-tenancy only) |
 | POST | `/cluster/run` | Jumpstart multi-step cluster envelope |
@@ -134,9 +139,19 @@ See [docs/PROMOTE.md](docs/PROMOTE.md) and `.github/workflows/ci-promote.yml`.
 
 - **Auth gate** → JWT in `localStorage`, restored via `/auth/me`
 - **Shell** → sidebar nav + role display
-- **Pages:** Spec Studio · Jumpstart · Dashboard · Exceptions · Runs · Connectors · Evidence · Audit
+- **Pages:** Spec Studio · Jumpstart · Dashboard · Exceptions · Runs · Sources · Connectors · Evidence · Audit
 - Default route after login: `/studio` (portfolio Launch demo uses `…/studio`)
 - **Data access:** thin `api()` client; no server state library in MVP (swap in React Query later)
+
+## MCP skills (stdio)
+
+Recon and Close Agent MCPs wrap the HTTP API (not warehouses directly). See [docs/NORTH_STAR.md](docs/NORTH_STAR.md) and [docs/SOURCES.md](docs/SOURCES.md).
+
+```bash
+npm run dev:mcp          # recon HITL tools
+npm run dev:mcp-close    # TB / variance / subledger / draft / review
+npm run eval:all
+```
 
 ## Quick start
 

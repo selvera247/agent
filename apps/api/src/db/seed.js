@@ -193,7 +193,51 @@ export function seedDatabase({ force = false } = {}) {
   for (const u of users) {
     console.log(`  - ${u.email} (${u.role})`);
   }
+  ensureSourceConnections(orgId);
   return { seeded: true };
+}
+
+/** Idempotent: ensure default warehouse source connections exist for an org */
+export function ensureSourceConnections(orgId = "org_fdg_demo") {
+  const db = getDb();
+  const count = db
+    .prepare(`SELECT COUNT(*) AS n FROM source_connections WHERE org_id = ?`)
+    .get(orgId);
+  if (count.n > 0) return { created: false };
+
+  const crm = db
+    .prepare(`SELECT id FROM source_systems WHERE org_id = ? AND code = 'SFDC'`)
+    .get(orgId);
+  const erp = db
+    .prepare(`SELECT id FROM source_systems WHERE org_id = ? AND code = 'NS'`)
+    .get(orgId);
+  if (!crm || !erp) return { created: false };
+
+  const insertConn = db.prepare(
+    `INSERT INTO source_connections
+      (id, org_id, code, name, platform, mode, role_in_recon, source_system_id, config, enabled)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`
+  );
+  const platforms = [
+    ["srcconn_postgres", "PG_WAREHOUSE", "Postgres warehouse", "postgres", crm.id],
+    ["srcconn_mysql", "MYSQL_REPLICA", "MySQL replica", "mysql", crm.id],
+    ["srcconn_snowflake", "SNOWFLAKE_FIN", "Snowflake finance mart", "snowflake", erp.id],
+    ["srcconn_databricks", "DBX_LAKEHOUSE", "Databricks lakehouse", "databricks", erp.id],
+  ];
+  for (const [idVal, code, name, platform, sysId] of platforms) {
+    insertConn.run(
+      idVal,
+      orgId,
+      code,
+      name,
+      platform,
+      "fixture",
+      "both",
+      sysId,
+      JSON.stringify({ note: "fixture mode — switch to live + credentials for real pulls" })
+    );
+  }
+  return { created: true };
 }
 
 const isCli = process.argv[1] && process.argv[1].endsWith("seed.js");

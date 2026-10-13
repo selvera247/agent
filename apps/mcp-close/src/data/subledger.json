@@ -1,0 +1,49 @@
+{
+  "6200": {
+    "2026-09": [
+      {
+        "txn_id": "JE-6200-0912",
+        "source_system": "ERP",
+        "description": "AWS September compute — reserved instances true-up",
+        "amount": -52000,
+        "posting_date": "2026-09-12"
+      },
+      {
+        "txn_id": "JE-6200-0920",
+        "source_system": "ERP",
+        "description": "Snowflake usage September",
+        "amount": -11000,
+        "posting_date": "2026-09-20"
+      }
+    ]
+  },
+  "4000": {
+    "2026-09": [
+      {
+        "txn_id": "JE-4000-0905",
+        "source_system": "Billing",
+        "description": "Enterprise renewals booked September",
+        "amount": 180000,
+        "posting_date": "2026-09-05"
+      },
+      {
+        "txn_id": "JE-4000-0918",
+        "source_system": "Billing",
+        "description": "Timing: Q3 deferred released early (planted)",
+        "amount": 50000,
+        "posting_date": "2026-09-18"
+      }
+    ]
+  },
+  "6300": {
+    "2026-09": [
+      {
+        "txn_id": "JE-6300-0915",
+        "source_system": "ERP",
+        "description": "Legal retainer — no MoM driver beyond timing",
+        "amount": -47000,
+        "posting_date": "2026-09-15"
+      }
+    ]
+  }
+}

@@ -285,3 +285,36 @@ CREATE TABLE IF NOT EXISTS cluster_runs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_cluster_runs_org ON cluster_runs(org_id, created_at DESC);
+
+-- Multi-platform warehouse / SQL source connections (Postgres, MySQL, Snowflake, Databricks, …)
+CREATE TABLE IF NOT EXISTS source_connections (
+  id              TEXT PRIMARY KEY,
+  org_id          TEXT NOT NULL REFERENCES organizations(id),
+  code            TEXT NOT NULL,
+  name            TEXT NOT NULL,
+  platform        TEXT NOT NULL, -- postgres | mysql | snowflake | databricks | bigquery | fabric
+  mode            TEXT NOT NULL DEFAULT 'fixture' CHECK (mode IN ('fixture', 'live')),
+  role_in_recon   TEXT NOT NULL CHECK (role_in_recon IN ('commercial', 'gl', 'both')),
+  source_system_id TEXT REFERENCES source_systems(id),
+  config          TEXT NOT NULL DEFAULT '{}', -- JSON: host, database, schema, sql, secrets via env
+  enabled         INTEGER NOT NULL DEFAULT 1,
+  last_sync_at    TEXT,
+  last_sync_status TEXT,
+  created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (org_id, code)
+);
+
+CREATE TABLE IF NOT EXISTS source_syncs (
+  id              TEXT PRIMARY KEY,
+  org_id          TEXT NOT NULL REFERENCES organizations(id),
+  connection_id   TEXT NOT NULL REFERENCES source_connections(id),
+  status          TEXT NOT NULL CHECK (status IN ('running', 'completed', 'failed')),
+  commercial_count INTEGER NOT NULL DEFAULT 0,
+  gl_count        INTEGER NOT NULL DEFAULT 0,
+  error_message   TEXT,
+  started_at      TEXT NOT NULL,
+  completed_at    TEXT,
+  triggered_by    TEXT REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_source_syncs_conn ON source_syncs(connection_id, started_at DESC);

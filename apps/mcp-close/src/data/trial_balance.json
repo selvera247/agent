@@ -1,0 +1,28 @@
+{
+  "entity": "ND-US",
+  "currency": "USD",
+  "periods": {
+    "2026-08": [
+      { "account": "4000", "name": "Product revenue", "balance": 1250000 },
+      { "account": "4100", "name": "Service revenue", "balance": 420000 },
+      { "account": "5000", "name": "COGS", "balance": -610000 },
+      { "account": "6100", "name": "Salaries", "balance": -280000 },
+      { "account": "6200", "name": "Cloud infrastructure", "balance": -95000 },
+      { "account": "6300", "name": "Professional fees", "balance": -48000 },
+      { "account": "1200", "name": "AR control", "balance": 312000 }
+    ],
+    "2026-09": [
+      { "account": "4000", "name": "Product revenue", "balance": 1480000 },
+      { "account": "4100", "name": "Service revenue", "balance": 405000 },
+      { "account": "5000", "name": "COGS", "balance": -720000 },
+      { "account": "6100", "name": "Salaries", "balance": -282000 },
+      { "account": "6200", "name": "Cloud infrastructure", "balance": -158000 },
+      { "account": "6300", "name": "Professional fees", "balance": -47000 },
+      { "account": "1200", "name": "AR control", "balance": 355000 }
+    ]
+  },
+  "policy": {
+    "pct_threshold": 0.1,
+    "abs_threshold": 50000
+  }
+}
