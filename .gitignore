@@ -15,3 +15,18 @@ apps/mcp/exports/
 apps/mcp-close/exports/
 apps/mcp-close/src/data/review_queue.json
 *.log
+
+# Collections specialist — local weights & internal maps only
+models/
+artifacts/
+data/collections_specialist/internal/
+*.gguf
+adapter_model.bin
+adapter_config.json
+
+# Orchestrator / Python
+.venv-orch/
+__pycache__/
+*.py[cod]
+*.pyc
+*.egg-info/

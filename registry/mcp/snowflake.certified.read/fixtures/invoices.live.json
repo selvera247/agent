@@ -1,0 +1,71 @@
+{
+  "warehouse": "COMPUTE_WH",
+  "database": "FINANCE",
+  "schema": "CERTIFIED",
+  "table": "CRM_INVOICES",
+  "rows": [
+    {
+      "SOURCE_ID": "SF_INV_1001",
+      "INVOICE_NUMBER": "INV-1001",
+      "CUSTOMER_NAME": "Acme Stores",
+      "INVOICE_DATE": "2026-09-03",
+      "AMOUNT": 125000,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-EAST"
+    },
+    {
+      "SOURCE_ID": "SF_INV_1002",
+      "INVOICE_NUMBER": "INV-1002",
+      "CUSTOMER_NAME": "Northwind",
+      "INVOICE_DATE": "2026-09-05",
+      "AMOUNT": 48250.5,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-EAST"
+    },
+    {
+      "SOURCE_ID": "SF_INV_1003",
+      "INVOICE_NUMBER": "INV-1003",
+      "CUSTOMER_NAME": "Contoso",
+      "INVOICE_DATE": "2026-09-08",
+      "AMOUNT": 91000,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-WEST"
+    },
+    {
+      "SOURCE_ID": "SF_INV_1004",
+      "INVOICE_NUMBER": "INV-1004",
+      "CUSTOMER_NAME": "Fabrikam",
+      "INVOICE_DATE": "2026-09-12",
+      "AMOUNT": 15600,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-WEST"
+    },
+    {
+      "SOURCE_ID": "SF_INV_1005",
+      "INVOICE_NUMBER": "INV-1005",
+      "CUSTOMER_NAME": "Litware EU",
+      "INVOICE_DATE": "2026-09-15",
+      "AMOUNT": 72000,
+      "CURRENCY": "EUR",
+      "ENTITY_CODE": "EU-CORE"
+    },
+    {
+      "SOURCE_ID": "SF_INV_1006",
+      "INVOICE_NUMBER": "INV-1006",
+      "CUSTOMER_NAME": "Adventure Works",
+      "INVOICE_DATE": "2026-09-18",
+      "AMOUNT": 33400,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-EAST"
+    },
+    {
+      "SOURCE_ID": "SF_INV_1007",
+      "INVOICE_NUMBER": "INV-1007",
+      "CUSTOMER_NAME": "Tailspin Toys",
+      "INVOICE_DATE": "2026-09-20",
+      "AMOUNT": 18800,
+      "CURRENCY": "USD",
+      "ENTITY_CODE": "US-WEST"
+    }
+  ]
+}

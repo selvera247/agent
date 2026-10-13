@@ -1,0 +1,9 @@
+id: collections.policy_guard
+evaluator: scripts/evaluate_collections_recommendations.py
+thresholds:
+  policy_pass_rate: 0.95
+  groundedness_rate: 0.95
+  hallucination_rate_max: 0.05
+  evidence_coverage_mean: 0.50
+allow_external_apis: false
+require_pseudonymized_inputs: true

@@ -1,0 +1,17 @@
+[project]
+name = "findatagraph-orchestrator"
+version = "0.2.0"
+description = "LangGraph multi-agent cluster for FinDataGraph Jumpstart"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.34",
+  "httpx>=0.28",
+  "langgraph>=0.2.60",
+  "langchain-core>=0.3.28",
+  "pydantic>=2.10",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

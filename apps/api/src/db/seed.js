@@ -100,64 +100,20 @@ export function seedDatabase({ force = false } = {}) {
   );
   insertSrc.run(crm, orgId, "SFDC", "Salesforce Billing", "crm");
   insertSrc.run(erp, orgId, "NS", "NetSuite ERP", "erp");
-
-  const insertConn = db.prepare(
-    `INSERT INTO source_connections
-      (id, org_id, code, name, platform, mode, role_in_recon, source_system_id, config, enabled)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`
-  );
-
-  // First-round platforms — fixture mode works offline; flip mode to live + config for real pulls
-  insertConn.run(
-    "srcconn_postgres",
+  insertSrc.run(
+    "src_snowflake",
     orgId,
-    "PG_WAREHOUSE",
-    "Postgres warehouse",
-    "postgres",
-    "fixture",
-    "both",
-    crm,
-    JSON.stringify({ note: "Set mode=live and connection_string / POSTGRES_URL for real pulls" })
-  );
-  insertConn.run(
-    "srcconn_mysql",
-    orgId,
-    "MYSQL_REPLICA",
-    "MySQL replica",
-    "mysql",
-    "fixture",
-    "both",
-    crm,
-    JSON.stringify({ note: "Set mode=live and MYSQL_URL for real pulls" })
-  );
-  insertConn.run(
-    "srcconn_snowflake",
-    orgId,
-    "SNOWFLAKE_FIN",
-    "Snowflake finance mart",
-    "snowflake",
-    "fixture",
-    "both",
-    erp,
-    JSON.stringify({ note: "Set mode=live + SNOWFLAKE_ACCOUNT/TOKEN for SQL API" })
-  );
-  insertConn.run(
-    "srcconn_databricks",
-    orgId,
-    "DBX_LAKEHOUSE",
-    "Databricks lakehouse",
-    "databricks",
-    "fixture",
-    "both",
-    erp,
-    JSON.stringify({ note: "Set mode=live + DATABRICKS_HOST/TOKEN/WAREHOUSE_ID" })
+    "SNOWFLAKE",
+    "Snowflake certified warehouse",
+    "billing"
   );
 
   const defId = "rec_crm_gl_revenue";
   db.prepare(
     `INSERT INTO reconciliation_definitions
-      (id, org_id, code, name, description, left_system, right_system, tolerance_abs, materiality_abs)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      (id, org_id, code, name, description, left_system, right_system,
+       match_kind, tolerance_abs, materiality_abs, source, active)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'crm_gl', ?, ?, 'seeded', 1)`
   ).run(
     defId,
     orgId,
@@ -237,6 +193,7 @@ export function seedDatabase({ force = false } = {}) {
   for (const u of users) {
     console.log(`  - ${u.email} (${u.role})`);
   }
+  ensureSourceConnections(orgId);
   return { seeded: true };
 }
 

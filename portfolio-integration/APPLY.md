@@ -25,6 +25,13 @@ export const FINDATAGRAPH_DEMO_URL = "https://YOUR-HOST.example";
 
 Use the Render URL from [deploy-render.md](../.github/workflows/deploy-render.md).
 
+The ready-made case study appends `/studio` so Launch demo opens Spec Studio
+dual-path intake (seeded CRM↔GL + NL generate). If you set the host only, keep:
+
+```ts
+export const FINDATAGRAPH_DEMO_URL = "https://YOUR-HOST.example/studio";
+```
+
 ## 3. Push + Pages deploy
 
 ```bash

@@ -6,9 +6,12 @@ import CaseCallout from "../components/CaseCallout";
  * Currently a Cloudflare quick-tunnel preview. After Render blueprint deploy,
  * replace with https://findatagraph.onrender.com (see agent repo deploy-render.md).
  */
-export const FINDATAGRAPH_DEMO_URL =
+/** Hosted FinDataGraph app — opens Spec Studio dual-path intake after login. */
+const FINDATAGRAPH_DEMO_HOST =
   import.meta.env.VITE_FINDATAGRAPH_DEMO_URL ||
-  "https://joyce-dealt-laden-cuts.trycloudflare.com";
+  "https://tremendous-thu-quite-encourage.trycloudflare.com";
+
+export const FINDATAGRAPH_DEMO_URL = FINDATAGRAPH_DEMO_HOST.replace(/\/$/, "") + "/studio";
 
 export default function FinDataGraphCaseStudy() {
   return (
@@ -35,8 +38,9 @@ export default function FinDataGraphCaseStudy() {
         <div className="kicker">Case study · Demo 03 · Financial data graph</div>
         <h1>FinDataGraph</h1>
         <p className="disclaimer">
-          Continuous close & reconciliation over a governed financial data graph —
-          synthetic Meridian Retail data only. Login-gated live demo.
+          Spec Studio dual path over a governed financial data graph — keep the
+          seeded CRM↔GL pack, or describe a need (e.g. CC auth / settlements /
+          received). Synthetic Meridian Retail data. Login-gated live demo.
         </p>
 
         <div className="hero-cta" style={{ margin: "1.25rem 0 2rem" }}>
@@ -89,12 +93,16 @@ export default function FinDataGraphCaseStudy() {
               corrections, audit log).
             </li>
             <li>
-              CRM invoice ↔ GL revenue matcher that opens typed exceptions (amount,
-              missing side, entity mismatch).
+              Spec Studio dual path: seeded CRM↔GL pack + NL generate/implement for
+              new agents (including CC auth ↔ settlements ↔ cash received).
             </li>
             <li>
-              HITL resolve / waive / correction flow with dual control above $10k and
-              immutable audit events.
+              CRM invoice ↔ GL revenue matcher and three-way card matcher that open
+              typed exceptions.
+            </li>
+            <li>
+              HITL resolve / waive / correction flow with dual control above $10k,
+              audit events, and per-action demo credits.
             </li>
             <li>RBAC: admin / controller / accountant with entity scope.</li>
           </ul>
@@ -168,6 +176,11 @@ export default function FinDataGraphCaseStudy() {
               <code style={{ color: "var(--signal)" }}>
                 controller@findatagraph.demo / password123
               </code>
+            </li>
+            <li>
+              After login you land on <code style={{ color: "var(--signal)" }}>/studio</code> —
+              try the seeded CRM↔GL chip, then enter “reconcile CC auth, settlements,
+              and what we received”.
             </li>
             <li>
               Portfolio route:{" "}

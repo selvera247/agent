@@ -1,7 +1,7 @@
 import { SOURCE_PLATFORMS } from "@findatagraph/shared";
 import { PostgresAdapter } from "./postgres.js";
 import { MysqlAdapter } from "./mysql.js";
-import { SnowflakeAdapter } from "./snowflake.js";
+import { SnowflakeAdapter } from "./snowflakeAdapter.js";
 import { DatabricksAdapter } from "./databricks.js";
 import { FixtureAdapter } from "./fixtureAdapter.js";
 

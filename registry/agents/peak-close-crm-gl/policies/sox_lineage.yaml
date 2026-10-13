@@ -1,0 +1,11 @@
+id: sox.lineage.required
+require_evidence_on:
+  - recon.run
+  - report.generate
+  - correction.approve
+  - connector.sync
+evidence_fields:
+  - content_hash
+  - policy_version
+  - source_citations
+retention: client_controlled

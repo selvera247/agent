@@ -1,0 +1,26 @@
+id: peak.collections.recommendation
+title: Collections Recommendation Specialist
+version: 0.1.0
+domain: collections
+jumpstart: false
+workflow:
+  - investigate
+  - recommend
+  - hitl_review
+pricing:
+  model: credits
+  actions:
+    recommendation.generate: 3
+tools: []
+policies:
+  - collections.policy_guard
+hitl:
+  serve: shadow_mode_first
+outputs:
+  - action
+  - reason
+  - confidence
+  - evidence
+spec_pack: spec/ai-specialist/
+eval_runner: scripts/run_local_eval.py
+config: configs/collections_specialist_config.yaml

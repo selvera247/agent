@@ -1,0 +1,70 @@
+# Collections Recommendation Specialist — train / eval / serve
+
+dataset:
+  version: synthetic_gold_v0
+  path: data/collections_specialist/examples.jsonl
+  holdout_field: metadata.split
+  holdout_value: holdout
+  # Org reserved entirely for holdout in gold set
+  holdout_organizations:
+    - org_99
+
+model:
+  base_name: qwen2.5-coder:7b
+  base_hf_id: Qwen/Qwen2.5-Coder-7B-Instruct
+  context_length: 2048
+  # Alternate: Qwen3-Coder 8B — raise VRAM requirements below
+
+lora:
+  r: 32
+  alpha: 64          # 2 * r
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  learning_rate: 1.0e-4
+  epochs: 2
+  batch_size: 8
+  grad_accum: 2
+  max_steps: null
+  eval_every_steps: 500
+  assistant_only_masking: true
+  output_dir: models/collections-lora
+  quantize: qlora     # qlora | lora
+  gpu:
+    min_vram_gb: 16
+    recommended_vram_gb: 24
+    precision: bf16
+
+serving:
+  runtime: ollama     # ollama | vllm | transformers
+  host: 127.0.0.1
+  port: 11434
+  temperature: 0.0
+  max_tokens: 512
+  timeout_s: 60
+
+evaluation:
+  script: scripts/evaluate_collections_recommendations.py
+  runner: scripts/run_local_eval.py
+  artifacts_dir: artifacts/collections_eval
+  thresholds:
+    policy_pass_rate: 0.95
+    groundedness_rate: 0.95
+    hallucination_rate_max: 0.05
+    evidence_coverage_mean: 0.50
+    median_latency_ms_max: 1000
+  action_synonyms_enabled: true
+
+prompts:
+  path: prompts/collections_prompts.md
+  mode: zero_shot     # zero_shot | few_shot (few_shot must use train split only)
+
+privacy:
+  allow_external_apis: false
+  require_pseudonymized_inputs: true

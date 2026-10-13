@@ -1,12 +1,16 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./api/auth";
 import Shell from "./components/Shell";
-import LoginPage from "./pages/LoginPage";
+import LoginPage, { LoginCallbackPage } from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ExceptionsPage from "./pages/ExceptionsPage";
 import ExceptionDetailPage from "./pages/ExceptionDetailPage";
 import RunsPage from "./pages/RunsPage";
 import AuditPage from "./pages/AuditPage";
+import SpecStudioPage from "./pages/SpecStudioPage";
+import JumpstartReportPage from "./pages/JumpstartReportPage";
+import EvidencePage from "./pages/EvidencePage";
+import ConnectorsPage from "./pages/ConnectorsPage";
 import SourcesPage from "./pages/SourcesPage";
 
 function Protected({ children }) {
@@ -20,6 +24,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/login/callback" element={<LoginCallbackPage />} />
       <Route
         path="/"
         element={
@@ -28,14 +33,19 @@ export default function App() {
           </Protected>
         }
       >
-        <Route index element={<DashboardPage />} />
-        <Route path="sources" element={<SourcesPage />} />
+        <Route index element={<Navigate to="/studio" replace />} />
+        <Route path="studio" element={<SpecStudioPage />} />
+        <Route path="jumpstart" element={<JumpstartReportPage />} />
+        <Route path="dashboard" element={<DashboardPage />} />
         <Route path="exceptions" element={<ExceptionsPage />} />
         <Route path="exceptions/:id" element={<ExceptionDetailPage />} />
         <Route path="runs" element={<RunsPage />} />
+        <Route path="sources" element={<SourcesPage />} />
+        <Route path="connectors" element={<ConnectorsPage />} />
+        <Route path="evidence" element={<EvidencePage />} />
         <Route path="audit" element={<AuditPage />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/studio" replace />} />
     </Routes>
   );
 }

@@ -8,7 +8,7 @@
     tag: "DEMO 03 · FINANCIAL DATA GRAPH",
     title: "FinDataGraph",
     blurb:
-      "Hosted continuous close control plane — CRM↔GL matching, exception lifecycle, dual-control corrections, and an audit log over a financial data graph.",
+      "Spec Studio dual path + continuous close control plane — seeded CRM↔GL, NL-generated agents (CC auth/settlements/received), exceptions, dual-control, audit.",
   },
 ```
 

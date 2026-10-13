@@ -2,7 +2,27 @@
 
 **Financial data graph** for continuous close & reconciliation.
 
-API-first control plane for **detect → investigate → resolve → report** on CRM invoice ↔ GL revenue breaks. The React app is one client; the HTTP API is the product.
+API-first control plane for **detect → investigate → resolve → report**.
+
+**Spec Studio dual path** (post-login `/studio`, portfolio Launch demo target):
+
+1. **Seeded** — open Meridian Retail CRM invoices ↔ GL revenue (`CRM_GL_REV`)
+2. **User-entered** — describe a need (e.g. “reconcile CC auth, settlements, and what we received”) → generate agent package → implement → run
+
+**Week-1 Jumpstart → scale path** (see [docs/JUMPSTART.md](docs/JUMPSTART.md), [docs/SCALE_PATH.md](docs/SCALE_PATH.md)):
+
+1. Freeze kit — SIPOC + acceptance + diagnostic report (`/jumpstart`)
+2. Practice library packages under `registry/agents/`
+3. Connector stubs (`/connectors`) before orchestration
+4. Evidence / Trust Cloud (`/evidence`) elevated from audit
+5. Cluster run (`POST /api/v1/cluster/run`) detect → investigate → HITL resolve → report
+6. Client-cloud delivery notes in [docs/CLIENT_CLOUD_DELIVERY.md](docs/CLIENT_CLOUD_DELIVERY.md)
+7. Live Snowflake SoR connector ([docs/LIVE_SNOWFLAKE.md](docs/LIVE_SNOWFLAKE.md))
+8. Promote path GHCR + K8s staging→prod ([docs/PROMOTE.md](docs/PROMOTE.md))
+9. LangGraph orchestrator sidecar (`apps/orchestrator/`, `ORCHESTRATOR_URL`)
+10. Hybrid RAG investigate (`POST /api/v1/investigate/*`)
+
+The React app is one client; the HTTP API is the product.
 
 ## Architecture
 
@@ -12,11 +32,13 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 apps/web  ──JSON/JWT──►  apps/api  ──SQL──►  SQLite (Postgres-ready schema)
                               │
                          matching engine
+                         Sources adapters
                          audit log
                          RBAC
+apps/mcp · apps/mcp-close ──MCP stdio──►  apps/api (recon + close skills)
 ```
 
-**Bounded contexts:** Identity · Master data · Reconciliation · Exceptions · Approvals · Audit
+**Bounded contexts:** Identity · Master data · Sources · Reconciliation · Exceptions · Approvals · Audit
 
 ## File structure
 
@@ -26,19 +48,19 @@ findatagraph/
 │   ├── api/                 # Headless Express API
 │   │   ├── src/
 │   │   │   ├── db/          # schema.sql, connection, seed
+│   │   │   ├── connectors/  # Jumpstart Snowflake + multi-platform Sources
 │   │   │   ├── routes/      # versioned HTTP handlers
 │   │   │   ├── services/    # matching engine
 │   │   │   ├── middleware/  # JWT auth + RBAC
 │   │   │   └── lib/         # ids, audit writer
 │   │   └── test/
-│   └── web/                 # React controller UI
-│       └── src/
-│           ├── api/         # client + auth context
-│           ├── components/
-│           ├── pages/
-│           └── styles/
+│   ├── web/                 # React controller UI
+│   ├── mcp/                 # Recon MCP (stdio) wrapping the API
+│   ├── mcp-close/           # Close Agent MCP (TB / variance / subledger)
+│   └── orchestrator/        # LangGraph sidecar
 ├── packages/shared/         # roles, statuses, shared constants
-├── docs/ARCHITECTURE.md
+├── registry/                # Practice library (agent packages + MCP stubs)
+├── docs/                    # ARCHITECTURE, JUMPSTART, SOURCES, NORTH_STAR
 └── package.json             # npm workspaces
 ```
 
@@ -80,13 +102,56 @@ findatagraph/
 | POST | `/exceptions/:id/corrections` | Propose correction |
 | POST | `/exceptions/corrections/:id/decide` | Approve/reject |
 | GET | `/audit` | Audit trail (controller+) |
+| GET | `/specs/starting-points` | Dual-path chips (seeded + generate) |
+| POST | `/specs/generate` | NL / chip → agent package |
+| POST | `/specs/:id/implement` | Materialize definition (+ CC staging) |
+| GET | `/specs/usage` | Demo credit meter |
+| GET | `/reports/jumpstart` | Exception list + DQ scorecard + variance memo |
+| GET | `/evidence` | Trust Cloud evidence (hash, citations, policy) |
+| GET | `/sources/platforms` | Multi-platform warehouse adapters |
+| GET | `/sources` | Source connections (Postgres/MySQL/Snowflake/Databricks/…) |
+| POST | `/sources/:id/test` | Connectivity probe |
+| POST | `/sources/:id/sync` | Pull commercial/GL into staging |
+| GET | `/connectors` | MCP/REST connector catalog + staging freshness |
+| POST | `/connectors/:code/sync` | Stub sync (live mode client-tenancy only) |
+| POST | `/cluster/run` | Jumpstart multi-step cluster envelope |
+| GET | `/cluster` | Cluster run history |
+| GET | `/registry/agents` | Practice library agent packages |
+| POST | `/investigate/retrieve` | Hybrid structured + BM25 retrieval over staging |
+| POST | `/investigate/run/:runId` | Investigate open exceptions for a recon run |
+
+## LangGraph orchestrator
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate
+pip install -r apps/orchestrator/requirements.txt
+PYTHONPATH=apps/orchestrator/src ORCHESTRATOR_PORT=8100 \
+  python -m findatagraph_orchestrator.server
+# API:
+ORCHESTRATOR_URL=http://127.0.0.1:8100 CONTROL_PLANE_URL=http://127.0.0.1:4000 npm run dev:api
+```
+
+## Promote (client registry)
+
+See [docs/PROMOTE.md](docs/PROMOTE.md) and `.github/workflows/ci-promote.yml`.
 
 ## UI architecture
 
 - **Auth gate** → JWT in `localStorage`, restored via `/auth/me`
 - **Shell** → sidebar nav + role display
-- **Pages:** Dashboard · Exceptions list/detail · Runs · Audit
+- **Pages:** Spec Studio · Jumpstart · Dashboard · Exceptions · Runs · Sources · Connectors · Evidence · Audit
+- Default route after login: `/studio` (portfolio Launch demo uses `…/studio`)
 - **Data access:** thin `api()` client; no server state library in MVP (swap in React Query later)
+
+## MCP skills (stdio)
+
+Recon and Close Agent MCPs wrap the HTTP API (not warehouses directly). See [docs/NORTH_STAR.md](docs/NORTH_STAR.md) and [docs/SOURCES.md](docs/SOURCES.md).
+
+```bash
+npm run dev:mcp          # recon HITL tools
+npm run dev:mcp-close    # TB / variance / subledger / draft / review
+npm run eval:all
+```
 
 ## Quick start
 
@@ -97,7 +162,9 @@ npm run dev:api          # :4000
 npm run dev:web          # :5173 (proxies /api → API)
 ```
 
-Demo logins (password `password123`):
+**Auth:** preferred IdPs are **Okta** or **Clerk** (`AUTH_MODE`); local demo login remains the Jumpstart default. See [docs/AUTH.md](docs/AUTH.md).
+
+Demo logins when `AUTH_MODE=local` (password `password123`):
 
 - `controller@findatagraph.demo`
 - `accountant@findatagraph.demo` (US-EAST + US-WEST only)
@@ -107,29 +174,6 @@ Demo logins (password `password123`):
 npm test -w @findatagraph/api
 npm run build
 ```
-
-## MCP skill packs (v1)
-
-| Package | Role |
-|---|---|
-| [`apps/mcp`](apps/mcp/README.md) | **Recon** — sources, runs, exceptions, corrections, audit |
-| [`apps/mcp-close`](apps/mcp-close/README.md) | **Close Agent** — TB, variance, flux draft, review queue |
-
-```bash
-npm run dev:api
-npm run dev:mcp          # recon stdio
-npm run dev:mcp-close    # close/flux stdio
-npm run eval:all         # recon 4/4 + close planted flux
-```
-
-## Source platforms (this round)
-
-Connectors for **Postgres, MySQL, Snowflake, Databricks** (plus BigQuery/Fabric stubs)
-pull canonical commercial + GL rows into certified staging. See [docs/SOURCES.md](docs/SOURCES.md).
-
-- Fixture mode works offline (seeded connections)
-- UI: **Sources** → Test / Sync → then **Runs** for matching
-- Live mode: set env vars in `.env.example` and flip connection `mode` to `live`
 
 ## Hosted live demo
 

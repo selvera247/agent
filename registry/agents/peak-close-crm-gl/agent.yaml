@@ -1,0 +1,33 @@
+id: peak.close.crm-gl-revenue
+title: CRM invoices ↔ GL revenue
+version: 1.0.0
+domain: continuous_close
+jumpstart: true
+workflow:
+  - detect
+  - investigate
+  - resolve
+  - report
+match_kind: crm_gl
+reusable_seed_code: CRM_GL_REV
+pricing:
+  model: credits
+  actions:
+    recon.run: 10
+    exception.resolve: 3
+    correction.approve: 5
+    report.generate: 4
+    cluster.run: 15
+tools:
+  - mcp://open-finance/snowflake.invoices.read@1
+  - mcp://open-finance/snowflake.gl_revenue.read@1
+policies:
+  - sox.lineage.required
+  - dual_control.above_materiality
+hitl:
+  resolve: human_on_the_loop
+  material_actions: controller_dual_control
+outputs:
+  - exception_list
+  - data_quality_scorecard
+  - variance_memo

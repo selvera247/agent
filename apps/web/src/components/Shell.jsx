@@ -2,10 +2,14 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../api/auth";
 
 const links = [
-  { to: "/", label: "Dashboard", end: true },
-  { to: "/sources", label: "Sources" },
+  { to: "/studio", label: "Spec Studio", end: true },
+  { to: "/jumpstart", label: "Jumpstart" },
+  { to: "/dashboard", label: "Dashboard" },
   { to: "/exceptions", label: "Exceptions" },
   { to: "/runs", label: "Runs" },
+  { to: "/sources", label: "Sources" },
+  { to: "/connectors", label: "Connectors" },
+  { to: "/evidence", label: "Evidence" },
   { to: "/audit", label: "Audit" },
 ];
 

@@ -46,7 +46,10 @@ export default function RunsPage() {
       <header className="page-header">
         <div>
           <h1>Reconciliation runs</h1>
-          <p>Trigger CRM ↔ GL matching and review historical runs.</p>
+          <p>
+            Trigger seeded CRM↔GL or Spec Studio–generated agents (including CC
+            auth ↔ settlements ↔ received).
+          </p>
         </div>
       </header>
 
@@ -62,6 +65,7 @@ export default function RunsPage() {
               <tr>
                 <th>Code</th>
                 <th>Name</th>
+                <th>Source</th>
                 <th>Tolerance</th>
                 <th>Materiality</th>
                 <th />
@@ -76,6 +80,12 @@ export default function RunsPage() {
                     <div style={{ color: "var(--muted)", fontSize: "0.85rem" }}>
                       {d.description}
                     </div>
+                  </td>
+                  <td>
+                    <span className="badge">
+                      {d.source || "seeded"}
+                      {d.match_kind ? ` · ${d.match_kind}` : ""}
+                    </span>
                   </td>
                   <td>{d.tolerance_abs}</td>
                   <td>{d.materiality_abs}</td>

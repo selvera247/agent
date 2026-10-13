@@ -23,14 +23,13 @@ The web app is one client; the API is the product surface.
                                     │  → Postgres later│
                                     └──────────────────┘
 
-External sources (this round)
-  Postgres / MySQL / Snowflake / Databricks ──SourceAdapter──► Certified staging
-  (later: Oracle eBS / SAP SD on the same contract)
+External adapters
+  ERP / CRM / Billing ──MCP/REST stub──► Certified staging tables
+  Warehouse / SQL Sources ──SourceAdapter──► Staging (fixture or live)
   Identity (Okta/Entra) ──────► JWT / OIDC swap-in
+  Practice library (`registry/`) ──► Agent packages + connector contracts
+  MCP clients (`apps/mcp`, `apps/mcp-close`) ──stdio──► FinDataGraph API
 ```
-
-See [SOURCES.md](./SOURCES.md) for the connector contract.
-
 
 ## Bounded contexts
 
@@ -38,10 +37,16 @@ See [SOURCES.md](./SOURCES.md) for the connector contract.
 |---|---|
 | Identity | Users, roles, JWT auth |
 | Master data | Legal entities, source systems |
+| Sources | Multi-platform warehouse connections + sync |
 | Reconciliation | Definitions, runs, matching engine |
 | Exceptions | Lifecycle, assignment, resolution |
 | Approvals | Dual-control for material actions |
 | Audit | Append-only event log |
+| Evidence | Hashed Trust Cloud records + source citations |
+| Connectors | MCP/REST catalog + stub/live sync (Jumpstart Snowflake) |
+| Jumpstart / Cluster | Diagnostic report + multi-step orchestration |
+| Registry | Practice-library agent packages |
+| MCP skills | Recon HITL + Close Agent flux tools over the API |
 
 ## Scalability path
 
@@ -50,7 +55,7 @@ See [SOURCES.md](./SOURCES.md) for the connector contract.
 | Database | SQLite file | Postgres + connection pool |
 | API | Single Node process | Horizontal replicas behind LB |
 | Matching | In-process sync job | Worker queue (BullMQ / Temporal) |
-| Auth | Local JWT + bcrypt | OIDC (Okta/Entra) |
+| Auth | Local JWT + bcrypt | **Okta or Clerk** OIDC (JWKS); `AUTH_MODE` |
 | Files / reports | JSON API | Object storage + PDF packs |
 | Multi-tenant | Single org | `org_id` already on core tables |
 
@@ -61,22 +66,6 @@ See [SOURCES.md](./SOURCES.md) for the connector contract.
 - Entity-scoped visibility for accountants
 - Material waive/correct requires `controller` or `admin`
 - Every mutation writes `audit_log`
-
-## MCP skill surface
-
-```
-Close Agent MCP (flux/commentary)     FinDataGraph Recon MCP (this repo)
-         │                                      │
-         └──────── shared governance ───────────┘
-              cite IDs · human gate · planted evals
-                           │
-                           ▼
-                  FinDataGraph HTTP API
-                           │
-              Postgres / MySQL / Snowflake / Databricks
-```
-
-Recon MCP tools wrap `/api/v1` only — see `apps/mcp/README.md`.
 
 ## API versioning
 

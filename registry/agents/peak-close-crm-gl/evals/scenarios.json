@@ -1,0 +1,25 @@
+{
+  "agent_id": "peak.close.crm-gl-revenue",
+  "scenarios": [
+    {
+      "id": "amount_mismatch",
+      "reference": "INV-1002",
+      "expect_exception_type": "amount_mismatch"
+    },
+    {
+      "id": "entity_mismatch",
+      "reference": "INV-1005",
+      "expect_exception_type": "entity_mismatch"
+    },
+    {
+      "id": "missing_in_gl",
+      "reference": "INV-1007",
+      "expect_exception_type": "missing_in_gl"
+    },
+    {
+      "id": "orphan_gl",
+      "reference": "INV-1099",
+      "expect_exception_type": "missing_in_crm"
+    }
+  ]
+}
