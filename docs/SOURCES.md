@@ -117,6 +117,7 @@ Snowflake/Databricks are HTTPS APIs — pass tokens as container env; no special
 |---|---|
 | GET | `/api/v1/sources` |
 | GET | `/api/v1/sources/:id` |
+| PATCH | `/api/v1/sources/:id` |
 | POST | `/api/v1/sources/:id/test` |
 | POST | `/api/v1/sources/:id/sync` |
 | GET | `/api/v1/sources/:id/syncs` |
