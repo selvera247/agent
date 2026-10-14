@@ -9,6 +9,16 @@ import { FixtureAdapter } from "./fixtureAdapter.js";
  *   account, user, warehouse, database, schema
  *   token or SNOWFLAKE_TOKEN (PAT / key-pair exchange token)
  */
+function snowflakeHost(accountRaw) {
+  let account = String(accountRaw || "").trim();
+  account = account.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+  // Allow pasting full hostname or account locator (xy12345.us-east-1 / org-account)
+  if (account.toLowerCase().endsWith(".snowflakecomputing.com")) {
+    return account;
+  }
+  return `${account}.snowflakecomputing.com`;
+}
+
 export class SnowflakeAdapter extends SourceAdapter {
   #baseUrl() {
     const account = cfg(this.config, "account") || process.env.SNOWFLAKE_ACCOUNT;
@@ -17,8 +27,14 @@ export class SnowflakeAdapter extends SourceAdapter {
       err.status = 400;
       throw err;
     }
-    const host = account.includes(".") ? account : `${account}.snowflakecomputing.com`;
-    return `https://${host}`;
+    if (/^xy12345\./i.test(String(account).trim())) {
+      const err = new Error(
+        "Replace placeholder account xy12345… with your real Snowflake account locator from Snowsight (Account menu → Account / URL host before .snowflakecomputing.com)."
+      );
+      err.status = 400;
+      throw err;
+    }
+    return `https://${snowflakeHost(account)}`;
   }
 
   async #sql(statement) {
@@ -38,16 +54,27 @@ export class SnowflakeAdapter extends SourceAdapter {
       role: cfg(this.config, "role") || process.env.SNOWFLAKE_ROLE,
     };
 
-    const res = await fetch(`${this.#baseUrl()}/api/v2/statements`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "User-Agent": "FinDataGraph/0.1",
-      },
-      body: JSON.stringify(body),
-    });
+    const url = `${this.#baseUrl()}/api/v2/statements`;
+    let res;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "User-Agent": "FinDataGraph/0.1",
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (error) {
+      const detail = error?.cause?.message || error?.message || "fetch failed";
+      const err = new Error(
+        `Snowflake unreachable (${url}): ${detail}. Check account locator, network policy / PAT temporary access, and warehouse.`
+      );
+      err.status = 502;
+      throw err;
+    }
 
     if (!res.ok) {
       const text = await res.text();
