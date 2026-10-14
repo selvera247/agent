@@ -8,7 +8,7 @@ import { spawn } from "node:child_process";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 const dbPath = path.join(root, "data/test-sources.db");
-const PORT = 4108;
+const PORT = 4109;
 const BASE = `http://127.0.0.1:${PORT}/api/v1`;
 
 let child;
@@ -110,4 +110,45 @@ test("fixture sync from postgres connection loads staging", async () => {
   assert.equal(sync.data.status, "completed");
   assert.ok(sync.data.commercial_count >= 1);
   assert.ok(sync.data.gl_count >= 1);
+});
+
+test("PATCH source connection can set live mode + config", async () => {
+  const { token } = await login();
+  const sources = await fetch(`${BASE}/sources`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => r.json());
+  const mysql = sources.data.find((s) => s.platform === "mysql");
+  assert.ok(mysql);
+
+  const patchRes = await fetch(`${BASE}/sources/${mysql.id}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      mode: "live",
+      config: {
+        host: "127.0.0.1",
+        port: 3306,
+        database: "findatagraph_mock",
+        user: "root",
+        password: "password",
+      },
+    }),
+  });
+  assert.equal(patchRes.status, 200);
+  const patched = await patchRes.json();
+  assert.equal(patched.data.mode, "live");
+  assert.equal(patched.data.config.database, "findatagraph_mock");
+
+  // Flip back so other suite steps stay fixture-safe
+  await fetch(`${BASE}/sources/${mysql.id}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ mode: "fixture", config: {} }),
+  });
 });

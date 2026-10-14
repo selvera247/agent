@@ -188,6 +188,7 @@ export default function ExceptionDetailPage() {
                 <button
                   type="button"
                   className="btn btn-secondary"
+                  data-testid="exception-assign"
                   disabled={!assigneeId}
                   onClick={() => act("/assign", { assignee_id: assigneeId })}
                 >
@@ -211,6 +212,7 @@ export default function ExceptionDetailPage() {
                   <button
                     type="button"
                     className="btn"
+                    data-testid="exception-resolve"
                     disabled={note.trim().length < 3}
                     onClick={() => act("/resolve", { note })}
                   >
@@ -220,6 +222,7 @@ export default function ExceptionDetailPage() {
                     <button
                       type="button"
                       className="btn btn-ghost"
+                      data-testid="exception-waive"
                       disabled={note.trim().length < 5}
                       onClick={() => act("/waive", { note })}
                     >

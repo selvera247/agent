@@ -18,7 +18,7 @@ export default function EvidencePage() {
   }, [token, user?.role]);
 
   return (
-    <div className="stack">
+    <div className="stack" data-testid="evidence-page">
       <header className="page-header">
         <div>
           <h1>Evidence</h1>

@@ -25,7 +25,12 @@ export default function Shell() {
         </div>
         <nav className="nav-list" aria-label="App">
           {links.map((link) => (
-            <NavLink key={link.to} to={link.to} end={link.end}>
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.end}
+              data-testid={`nav-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
+            >
               {link.label}
             </NavLink>
           ))}

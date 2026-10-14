@@ -42,7 +42,7 @@ export default function JumpstartReportPage() {
   const canRun = user?.role === "admin" || user?.role === "controller";
 
   return (
-    <div className="stack">
+    <div className="stack" data-testid="jumpstart-page">
       <header className="page-header">
         <div>
           <h1>Jumpstart report</h1>
@@ -95,7 +95,7 @@ export default function JumpstartReportPage() {
 
       {report ? (
         <>
-          <section className="grid-kpi">
+          <section className="grid-kpi" data-testid="jumpstart-scorecard">
             <article className="kpi">
               <div className="kpi-label">Match rate</div>
               <div className="kpi-value">

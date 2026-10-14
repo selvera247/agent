@@ -55,7 +55,11 @@ export default function LoginPage() {
         {mode === "okta" ? <OktaSignInPanel onError={setError} /> : null}
 
         {allowLocal ? (
-          <form onSubmit={onSubmit} style={{ marginTop: mode === "local" ? 0 : "1.25rem" }}>
+          <form
+            onSubmit={onSubmit}
+            style={{ marginTop: mode === "local" ? 0 : "1.25rem" }}
+            data-testid="login-form"
+          >
             {mode !== "local" ? (
               <p className="hint" style={{ marginBottom: "0.75rem" }}>
                 Jumpstart demo users (local fallback)
@@ -65,6 +69,7 @@ export default function LoginPage() {
               <label htmlFor="email">Email</label>
               <input
                 id="email"
+                data-testid="login-email"
                 type="email"
                 autoComplete="username"
                 value={email}
@@ -76,6 +81,7 @@ export default function LoginPage() {
               <label htmlFor="password">Password</label>
               <input
                 id="password"
+                data-testid="login-password"
                 type="password"
                 autoComplete="current-password"
                 value={password}
@@ -83,7 +89,12 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <button className="btn" type="submit" disabled={loading}>
+            <button
+              className="btn"
+              type="submit"
+              data-testid="login-submit"
+              disabled={loading}
+            >
               {loading ? "Signing in…" : "Sign in"}
             </button>
             <p className="hint">

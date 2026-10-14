@@ -87,7 +87,12 @@ export default function ExceptionsPage() {
                 rows.map((ex) => (
                   <tr key={ex.id}>
                     <td>
-                      <Link to={`/exceptions/${ex.id}`}>{ex.reference}</Link>
+                      <Link
+                        to={`/exceptions/${ex.id}`}
+                        data-testid={`exception-link-${ex.id}`}
+                      >
+                        {ex.reference}
+                      </Link>
                     </td>
                     <td>{ex.title}</td>
                     <td>{ex.entity_code}</td>

@@ -66,7 +66,7 @@ export default function ConnectorsPage() {
             </thead>
             <tbody>
               {rows.map((c) => (
-                <tr key={c.code}>
+                <tr key={c.code} data-testid={`connector-row-${c.code}`}>
                   <td>
                     <strong>{c.name}</strong>
                     <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>
@@ -104,6 +104,7 @@ export default function ConnectorsPage() {
                       <button
                         type="button"
                         className="btn"
+                        data-testid={`connector-sync-${c.code}`}
                         disabled={Boolean(busy)}
                         onClick={() => sync(c.code)}
                       >

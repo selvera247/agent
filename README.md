@@ -175,6 +175,18 @@ npm test -w @findatagraph/api
 npm run build
 ```
 
+## Playwright regression (against Docker / `:4000`)
+
+With the app already running (`docker run …` or `npm run start:prod`):
+
+```bash
+npx playwright install chromium
+PLAYWRIGHT_BASE_URL=http://localhost:4000 npm run test:e2e
+```
+
+Covers Spec Studio seeded CRM↔GL → Runs → Exceptions → Sources → Connectors → Jumpstart/Evidence/Audit.
+Live warehouse testing (MySQL / Snowflake / Databricks): [docs/SOURCES.md](docs/SOURCES.md) + [`data/mock-sources/`](data/mock-sources/).
+
 ## Hosted live demo
 
 Single-host production mode (API serves the web build):

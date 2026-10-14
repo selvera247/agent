@@ -22,8 +22,13 @@
     "eval:mcp-close": "npm run eval -w @findatagraph/mcp-close",
     "eval:all": "npm run eval:mcp && npm run eval:mcp-close",
     "test": "npm run test -w @findatagraph/api && npm run test -w @findatagraph/mcp && npm run test -w @findatagraph/mcp-close",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "test:orchestrator": "cd apps/orchestrator && PYTHONPATH=src python -m pytest -q",
     "dev:orchestrator": "cd apps/orchestrator && PYTHONPATH=src ORCHESTRATOR_PORT=8100 python -m findatagraph_orchestrator.server"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.0"
   },
   "engines": {
     "node": ">=18"

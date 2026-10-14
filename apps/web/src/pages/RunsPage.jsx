@@ -42,7 +42,7 @@ export default function RunsPage() {
   const canRun = user?.role === "admin" || user?.role === "controller";
 
   return (
-    <div className="stack">
+    <div className="stack" data-testid="runs-page">
       <header className="page-header">
         <div>
           <h1>Reconciliation runs</h1>

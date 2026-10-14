@@ -10,6 +10,9 @@ build/
 *.db-journal
 coverage/
 .vite/
+artifacts/playwright-report/
+test-results/
+playwright-report/
 apps/api/data/
 apps/mcp/exports/
 apps/mcp-close/exports/

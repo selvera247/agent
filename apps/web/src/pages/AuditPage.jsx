@@ -18,7 +18,7 @@ export default function AuditPage() {
   }, [token, user?.role]);
 
   return (
-    <div className="stack">
+    <div className="stack" data-testid="audit-page">
       <header className="page-header">
         <div>
           <h1>Audit log</h1>

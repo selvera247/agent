@@ -129,6 +129,7 @@ export default function SpecStudioPage() {
             <button
               key={point.id}
               type="button"
+              data-testid={`studio-chip-${point.id}`}
               className={
                 selectedPoint === point.id
                   ? "studio-chip active"
@@ -160,7 +161,12 @@ export default function SpecStudioPage() {
             placeholder='e.g. "reconcile CC auth, settlements, and what we received"'
           />
           <div className="actions">
-            <button className="btn" type="submit" disabled={busy === "generate"}>
+            <button
+              className="btn"
+              type="submit"
+              data-testid="studio-generate"
+              disabled={busy === "generate"}
+            >
               {busy === "generate" ? "Generating…" : "Generate package"}
             </button>
             <button
@@ -276,6 +282,7 @@ export default function SpecStudioPage() {
                 <button
                   type="button"
                   className="btn"
+                  data-testid="studio-implement"
                   disabled={!canImplement || busy === "implement"}
                   onClick={onImplement}
                 >
@@ -290,6 +297,7 @@ export default function SpecStudioPage() {
                   <button
                     type="button"
                     className="btn"
+                    data-testid="studio-run"
                     disabled={isPartial || busy === "run" || !canImplement}
                     onClick={onRun}
                   >
