@@ -55,16 +55,18 @@ Optional: put FinDataGraph on the same Compose network and use hostname `mysql-m
 Cannot run a full Snowflake account on your laptop. Use a free trial:
 
 1. Sign up at https://signup.snowflake.com (or your org sandbox).
-2. In a worksheet, run `snowflake_mock.sql` (or create tables + views with the same columns).
-3. Create a **programmatic access token (PAT)** for a user that can `USAGE` warehouse + `SELECT` the views.
-4. Note: account locator (e.g. `xy12345.us-east-1`), warehouse, database, schema.
+2. In a worksheet, **select a warehouse** in the top context bar (e.g. `COMPUTE_WH`).
+3. Paste/run all of `snowflake_mock.sql` — it creates `FINDATAGRAPH_MOCK.MOCK` and the views.
+   - If you see *“This session does not have a current database”*, you skipped the `USE DATABASE` / `USE SCHEMA` lines or ran only the `CREATE VIEW` fragment.
+4. Create a **programmatic access token (PAT)** for a user that can `USAGE` warehouse + `SELECT` the views.
+5. Note: account locator (e.g. `xy12345.us-east-1`), warehouse, database `FINDATAGRAPH_MOCK`, schema `MOCK`.
 
 FinDataGraph config (or container `-e`):
 
 ```json
 {
   "account": "xy12345.us-east-1",
-  "database": "FINANCE",
+  "database": "FINDATAGRAPH_MOCK",
   "schema": "MOCK",
   "warehouse": "COMPUTE_WH",
   "token": "<PAT>"
