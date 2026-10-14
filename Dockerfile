@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 make g+
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
+COPY apps/mcp/package.json apps/mcp/
+COPY apps/mcp-close/package.json apps/mcp-close/
 COPY packages/shared/package.json packages/shared/
 
 RUN npm ci
@@ -22,6 +24,9 @@ ENV NODE_ENV=production
 ENV PORT=4000
 ENV DATABASE_PATH=/data/findatagraph.db
 ENV CORS_ORIGIN=*
+ENV AUTH_MODE=local
+ENV AUTH_ALLOW_LOCAL=1
+ENV JWT_SECRET=dev-docker-change-me
 
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
@@ -29,6 +34,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 make g+
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
+COPY apps/mcp/package.json apps/mcp/
+COPY apps/mcp-close/package.json apps/mcp-close/
 COPY packages/shared/package.json packages/shared/
 RUN npm ci --omit=dev
 
