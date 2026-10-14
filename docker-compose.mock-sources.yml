@@ -1,0 +1,25 @@
+# Local mock warehouses for FinDataGraph Sources (live mode).
+# Usage (PowerShell, from repo root):
+#   docker compose -f docker-compose.mock-sources.yml up -d
+# Then Configure the MySQL source in the UI (see data/mock-sources/README.md).
+
+services:
+  mysql-mock:
+    image: mysql:8.4
+    container_name: findatagraph-mysql-mock
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: findatagraph_mock
+    volumes:
+      - ./data/mock-sources/mysql_mock.sql:/docker-entrypoint-initdb.d/01_mock.sql:ro
+      - findatagraph-mysql-mock:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  findatagraph-mysql-mock:

@@ -80,6 +80,14 @@ Mock DDL + planted breaks: [`data/mock-sources/`](../data/mock-sources/).
 
 ### Live against your mock DBs
 
+**MySQL locally (easiest):**
+
+```powershell
+docker compose -f docker-compose.mock-sources.yml up -d
+```
+
+See [`data/mock-sources/README.md`](../data/mock-sources/README.md) for Snowflake trial + Databricks workspace steps.
+
 1. Apply platform SQL from `data/mock-sources/` and load rows (entity codes `US-EAST` / `US-WEST` / `EU-CORE`).
 2. Flip that connection to **live** and set config:
 
